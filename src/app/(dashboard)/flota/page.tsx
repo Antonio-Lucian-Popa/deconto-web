@@ -7,9 +7,15 @@ import type { CarOverview } from '@/lib/api-types';
 import { Header } from '@/components/layout/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
+import { Car, User, ChevronRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 function formatRON(amount: number) {
-  return new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(amount);
+  return new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON', maximumFractionDigits: 0 }).format(amount);
+}
+
+function formatDate(dateStr: string) {
+  return new Intl.DateTimeFormat('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(dateStr));
 }
 
 export default function FlotaPage() {
@@ -20,10 +26,47 @@ export default function FlotaPage() {
     queryFn: () => apiFetch<CarOverview[]>('/api/fleet/overview'),
   });
 
+  const expiredCount = fleet?.reduce(
+    (n, car) => n + car.documents.filter((d) => d.status === 'expired').length,
+    0
+  ) ?? 0;
+  const soonCount = fleet?.reduce(
+    (n, car) => n + car.documents.filter((d) => d.status === 'expires_soon').length,
+    0
+  ) ?? 0;
+
   return (
     <div className="flex flex-col h-full overflow-auto">
       <Header title={t('title')} />
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-6 space-y-6">
+        {/* Summary bar */}
+        {!isLoading && fleet && fleet.length > 0 && (
+          <div className="flex items-center gap-6">
+            <span className="text-gray-400 text-sm">
+              <span className="text-white font-semibold">{fleet.length}</span> mașini în flotă
+            </span>
+            {expiredCount > 0 && (
+              <span className="flex items-center gap-1.5 text-red-400 text-sm">
+                <AlertTriangle size={14} />
+                {expiredCount} documente expirate
+              </span>
+            )}
+            {soonCount > 0 && (
+              <span className="flex items-center gap-1.5 text-yellow-400 text-sm">
+                <AlertTriangle size={14} />
+                {soonCount} expiră curând
+              </span>
+            )}
+            {expiredCount === 0 && soonCount === 0 && (
+              <span className="flex items-center gap-1.5 text-green-400 text-sm">
+                <CheckCircle2 size={14} />
+                Toate documentele valide
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Grid */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -31,44 +74,87 @@ export default function FlotaPage() {
             ))}
           </div>
         ) : fleet?.length === 0 ? (
-          <div className="text-center text-gray-500 py-20">Nu există mașini în flotă</div>
+          <div className="flex flex-col items-center justify-center py-24 text-gray-500 gap-3">
+            <Car size={48} className="opacity-20" />
+            <p>Nu există mașini în flotă</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {fleet?.map((car) => (
-              <div key={car.id} className="bg-[#1a1a1a] border border-white/10 rounded-xl p-5 space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-white font-bold text-lg">{car.plateNumber}</h3>
-                    <p className="text-gray-400 text-sm">{car.make} {car.model} {car.year && `(${car.year})`}</p>
-                  </div>
-                  <span className="text-blue-400 font-medium text-sm">{formatRON(car.totalCosts12m)}</span>
-                </div>
-                {car.assignedUser && (
-                  <p className="text-gray-400 text-sm">
-                    👤 {[car.assignedUser.firstName, car.assignedUser.lastName].filter(Boolean).join(' ') || car.assignedUser.email}
-                  </p>
-                )}
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Documente</p>
-                  {car.documents.length === 0 ? (
-                    <p className="text-gray-600 text-xs">Niciun document</p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {car.documents.map((doc) => (
-                        <div key={doc.reminderId} className="flex items-center justify-between">
-                          <span className="text-gray-300 text-xs">{doc.title}</span>
-                          <Badge
-                            variant={doc.status === 'expired' ? 'danger' : doc.status === 'expires_soon' ? 'warning' : 'success'}
-                          >
-                            {doc.status === 'expired' ? 'Expirat' : doc.status === 'expires_soon' ? `${doc.daysLeft}z` : 'Valid'}
-                          </Badge>
-                        </div>
-                      ))}
+            {fleet?.map((car) => {
+              const hasExpired = car.documents.some((d) => d.status === 'expired');
+              const hasSoon = car.documents.some((d) => d.status === 'expires_soon');
+              const borderColor = hasExpired
+                ? 'border-red-500/40'
+                : hasSoon
+                ? 'border-yellow-500/40'
+                : 'border-white/10';
+
+              return (
+                <Link
+                  key={car.id}
+                  href={`/flota/${car.id}`}
+                  className={`bg-[#1a1a1a] border ${borderColor} rounded-xl p-5 space-y-4 hover:bg-white/5 transition-colors group`}
+                >
+                  {/* Header */}
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-white font-bold text-lg tracking-wide">{car.plateNumber}</h3>
+                      <p className="text-gray-400 text-sm">
+                        {car.make} {car.model}{car.year ? ` (${car.year})` : ''}
+                      </p>
                     </div>
-                  )}
-                </div>
-              </div>
-            ))}
+                    <div className="text-right">
+                      <p className="text-blue-400 font-medium text-sm">{formatRON(car.totalCosts12m)}</p>
+                      <p className="text-gray-600 text-xs">costuri 12 luni</p>
+                    </div>
+                  </div>
+
+                  {/* Assigned user */}
+                  <div className="flex items-center gap-2 text-sm">
+                    <User size={14} className="text-gray-500" />
+                    {car.assignedUser ? (
+                      <span className="text-gray-300">
+                        {[car.assignedUser.firstName, car.assignedUser.lastName].filter(Boolean).join(' ') || car.assignedUser.email}
+                      </span>
+                    ) : (
+                      <span className="text-gray-600 italic">Neasignat</span>
+                    )}
+                  </div>
+
+                  {/* Documents status */}
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Documente</p>
+                    {car.documents.length === 0 ? (
+                      <p className="text-gray-600 text-xs">Niciun document înregistrat</p>
+                    ) : (
+                      <div className="space-y-1">
+                        {car.documents.slice(0, 4).map((doc) => (
+                          <div key={doc.reminderId} className="flex items-center justify-between">
+                            <span className="text-gray-300 text-xs truncate max-w-36">{doc.title}</span>
+                            <Badge
+                              variant={doc.status === 'expired' ? 'danger' : doc.status === 'expires_soon' ? 'warning' : 'success'}
+                            >
+                              {doc.status === 'expired'
+                                ? 'Expirat'
+                                : doc.status === 'expires_soon'
+                                ? `${doc.daysLeft}z`
+                                : formatDate(doc.expiresAt)}
+                            </Badge>
+                          </div>
+                        ))}
+                        {car.documents.length > 4 && (
+                          <p className="text-gray-600 text-xs">+{car.documents.length - 4} mai multe</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-end text-blue-400 text-xs group-hover:text-blue-300 transition-colors">
+                    Detalii <ChevronRight size={14} />
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
