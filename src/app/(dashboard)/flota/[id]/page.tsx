@@ -52,8 +52,8 @@ const COST_CATEGORY_LABELS: Record<string, string> = {
 
 type Tab = 'documents' | 'reminders' | 'costs';
 
-export default function CarDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function CarDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 

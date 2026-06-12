@@ -15,7 +15,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { ArrowLeft, Check, X, FileText, Download, Send, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
-import { use } from 'react';
 
 function formatRON(amount: number) {
   return new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(amount);
@@ -65,9 +64,9 @@ const canApprove: UserRole[] = ['ADMIN', 'MANAGER'];
 export default function TripDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = use(params);
+  const { id } = params;
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
