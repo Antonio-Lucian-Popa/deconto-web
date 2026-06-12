@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
 import { useUsers, userDisplayName } from '@/hooks/use-users';
-import { Download, Send, Plus, FileText, ChevronDown } from 'lucide-react';
+import { Download, Send, Plus, FileText, ChevronDown, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useMemo } from 'react';
 
@@ -40,6 +40,7 @@ export default function RapoartePage() {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: reports, isLoading } = useQuery({
     queryKey: ['reports'],
@@ -78,6 +79,20 @@ export default function RapoartePage() {
       toast.error('Descărcarea a eşuat');
     } finally {
       setDownloadingId(null);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Ștergi acest raport?')) return;
+    setDeletingId(id);
+    try {
+      await apiFetch(`/api/reports/${id}`, { method: 'DELETE' });
+      toast.success('Raport șters');
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Ștergere eșuată');
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -263,6 +278,14 @@ export default function RapoartePage() {
                             >
                               <Send size={15} />
                               {sendingId === r.id ? 'Se trimite...' : 'Trimite'}
+                            </button>
+                            <button
+                              onClick={() => handleDelete(r.id)}
+                              disabled={deletingId === r.id}
+                              className="flex items-center gap-1.5 text-gray-400 hover:text-red-400 transition-colors text-xs disabled:opacity-40"
+                              title="Șterge raport"
+                            >
+                              <Trash2 size={15} />
                             </button>
                           </div>
                         </td>
