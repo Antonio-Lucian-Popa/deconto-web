@@ -1,0 +1,20 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "deconturi": "Expense Reports",
+    "cheltuieli": "Expenses",
+    "rapoarte": "Reports",
+    "flota": "Fleet",
+    "echipa": "Team",
+    "setari": "Settings"
+  },
+  "auth": {
+    "login": "Login",
+    "email": "Email",
+    "password": "Password",
+    "loginButton": "Sign in",
+    "loggingIn": "Signing in...",
+    "loginError": "Invalid email or password",
+    "logout": "Sign out"
+  }
+}
