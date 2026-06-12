@@ -1,0 +1,135 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "deconturi": "Deconturi",
+    "cheltuieli": "Cheltuieli",
+    "rapoarte": "Rapoarte",
+    "flota": "Flotă",
+    "echipa": "Echipă",
+    "setari": "Setări"
+  },
+  "auth": {
+    "login": "Autentificare",
+    "email": "Email",
+    "password": "Parolă",
+    "loginButton": "Intră în cont",
+    "loggingIn": "Se autentifică...",
+    "loginError": "Email sau parolă incorectă",
+    "logout": "Deconectare"
+  },
+  "common": {
+    "loading": "Se încarcă...",
+    "error": "Eroare",
+    "save": "Salvează",
+    "cancel": "Anulează",
+    "delete": "Șterge",
+    "edit": "Editează",
+    "view": "Vizualizează",
+    "download": "Descarcă",
+    "send": "Trimite",
+    "approve": "Aprobă",
+    "reject": "Respinge",
+    "noData": "Nu există date",
+    "search": "Caută",
+    "filter": "Filtrează",
+    "export": "Exportă CSV",
+    "generate": "Generează"
+  },
+  "trips": {
+    "title": "Deconturi",
+    "newTrip": "Decont nou",
+    "employee": "Angajat",
+    "destination": "Destinație",
+    "period": "Perioadă",
+    "total": "Total cheltuieli",
+    "budget": "Buget",
+    "status": "Status",
+    "pending": "În așteptare",
+    "statuses": {
+      "ACTIVE": "Activ",
+      "CLOSED": "Închis",
+      "SUBMITTED": "Trimis",
+      "APPROVED": "Aprobat",
+      "REJECTED": "Respins"
+    },
+    "budgetExceeded": "Buget depășit",
+    "approveConfirm": "Ești sigur că vrei să aprobi acest decont?",
+    "rejectModal": "Respinge decont",
+    "rejectReason": "Motiv respingere",
+    "rejectReasonPlaceholder": "Introdu motivul respingerii...",
+    "rejectButton": "Respinge"
+  },
+  "expenses": {
+    "title": "Cheltuieli",
+    "categories": {
+      "COMBUSTIBIL": "Combustibil",
+      "MASA": "Masă",
+      "CAZARE": "Cazare",
+      "TRANSPORT": "Transport",
+      "DIURNA": "Diurnă",
+      "ALTELE": "Altele"
+    }
+  },
+  "reports": {
+    "title": "Rapoarte",
+    "type": "Tip",
+    "period": "Perioadă / Călătorie",
+    "generatedBy": "Generat de",
+    "sentTo": "Trimis la",
+    "date": "Dată",
+    "types": {
+      "TRIP": "Delegație",
+      "MONTHLY": "Lunar"
+    },
+    "newMonthly": "Raport lunar nou",
+    "selectMonth": "Selectează luna",
+    "selectEmployee": "Selectează angajat",
+    "allEmployees": "Toți angajații"
+  },
+  "fleet": {
+    "title": "Flotă",
+    "car": "Mașină",
+    "assignedTo": "Asignat",
+    "documents": "Documente",
+    "costs12m": "Costuri 12 luni",
+    "docStatuses": {
+      "valid": "Valid",
+      "expires_soon": "Expiră curând",
+      "expired": "Expirat"
+    }
+  },
+  "team": {
+    "title": "Echipă",
+    "inviteUser": "Invită utilizator",
+    "role": "Rol",
+    "status": "Status",
+    "active": "Activ",
+    "inactive": "Inactiv",
+    "roles": {
+      "ADMIN": "Admin",
+      "MANAGER": "Manager",
+      "ACCOUNTANT": "Contabil",
+      "EMPLOYEE": "Angajat"
+    }
+  },
+  "settings": {
+    "title": "Setări companie",
+    "companyName": "Nume companie",
+    "cif": "CIF",
+    "accountantEmail": "Email contabil"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "pendingTrips": "Deconturi în așteptare",
+    "monthTotal": "Total cheltuieli luna curentă",
+    "expiring": "Documente flotă ce expiră în 30 zile",
+    "recentTrips": "Ultimele deconturi trimise",
+    "byCategory": "Top categorii cheltuieli"
+  },
+  "mobileOnly": {
+    "title": "Folosește aplicația mobilă",
+    "description": "Această secțiune este disponibilă doar în aplicația mobilă Deconto.",
+    "ios": "Descarcă pe App Store",
+    "android": "Descarcă pe Google Play"
+  }
+}
