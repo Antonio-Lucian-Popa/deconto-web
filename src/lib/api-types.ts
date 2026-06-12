@@ -95,6 +95,62 @@ export interface CarOverview {
   totalCosts12m: number;
 }
 
+export interface Car {
+  id: string;
+  companyId: string;
+  plateNumber: string;
+  make: string;
+  model: string;
+  year: number | null;
+  mileage: number | null;
+  color: string | null;
+  assignedUserId: string | null;
+  createdAt: string;
+  reminders?: Reminder[];
+}
+
+export type ReminderStatus = 'ACTIVE' | 'DUE_SOON' | 'OVERDUE' | 'COMPLETED';
+
+export interface Reminder {
+  id: string;
+  carId: string;
+  userId: string;
+  title: string;
+  category: string;
+  expiresAt: string;
+  notifyBeforeDays: number;
+  status: ReminderStatus;
+  notes: string | null;
+  lastNotifiedAt: string | null;
+  createdAt: string;
+}
+
+export interface Document {
+  id: string;
+  carId: string;
+  type: string;
+  title: string;
+  imageUrl: string;
+  linkedCostId: string | null;
+  linkedReminderId: string | null;
+  createdAt: string;
+}
+
+export type CostCategory = 'FUEL' | 'SERVICE' | 'INSURANCE' | 'TAX' | 'TIRE' | 'WASH' | 'OTHER';
+
+export interface Cost {
+  id: string;
+  carId: string;
+  category: CostCategory;
+  amount: number;
+  currency: string;
+  date: string;
+  vendor: string | null;
+  notes: string | null;
+  linkedExpenseId: string | null;
+  createdAt: string;
+}
+
 export interface StatsSummary {
   activeTrip: {
     id: string;
@@ -125,6 +181,7 @@ export interface Company {
   name: string;
   cif: string | null;
   accountantEmail: string | null;
+  settings: Record<string, unknown> | null;
 }
 
 export interface LoginResponse {

@@ -43,7 +43,6 @@ export async function apiFetch<T>(
     if (newToken) {
       return apiFetch<T>(path, options, false);
     }
-    // Redirect to login
     if (typeof window !== 'undefined') {
       window.location.href = '/login';
     }
@@ -73,4 +72,30 @@ export async function apiDownload(path: string, filename: string) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+/** Upload a file (multipart/form-data) to the API. */
+export async function apiUpload<T>(path: string, formData: FormData, retry = true): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  if (res.status === 401 && retry) {
+    const newToken = await refreshAccessToken();
+    if (newToken) return apiUpload<T>(path, formData, false);
+    if (typeof window !== 'undefined') window.location.href = '/login';
+    throw new Error('Unauthorized');
+  }
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText })) as { message?: string };
+    throw new Error(err.message ?? 'Upload failed');
+  }
+
+  return res.json() as Promise<T>;
 }

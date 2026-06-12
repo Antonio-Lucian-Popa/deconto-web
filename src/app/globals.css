@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 15 15 15;
+  --foreground: 245 245 245;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: rgb(15 15 15);
+  color: rgb(245 245 245);
+}
+
+* {
+  box-sizing: border-box;
+}
