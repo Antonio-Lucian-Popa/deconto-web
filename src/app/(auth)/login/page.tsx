@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
 import type { User } from '@/lib/api-types';
+import { getAppPath } from '@/lib/api-url';
 
 export default function LoginPage() {
   const t = useTranslations('auth');
@@ -19,7 +20,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(getAppPath('/api/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

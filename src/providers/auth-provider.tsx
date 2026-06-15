@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { setAccessToken } from '@/lib/api-client';
-import { getApiBaseUrl } from '@/lib/api-url';
+import { getApiBaseUrl, getAppPath } from '@/lib/api-url';
 import type { User } from '@/lib/api-types';
 
 interface AuthContextValue {
@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Try to refresh on mount to restore session
-    fetch('/api/auth/refresh', { method: 'POST' })
+    fetch(getAppPath('/api/auth/refresh'), { method: 'POST' })
       .then((r) => r.ok ? r.json() : null)
       .then(async (data: { accessToken?: string } | null) => {
         if (data?.accessToken) {
@@ -50,11 +50,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await fetch(getAppPath('/api/auth/logout'), { method: 'POST' });
     setToken(null);
     setAccessToken(null);
     setUser(null);
-    window.location.href = '/login';
+    window.location.href = getAppPath('/login');
   }, []);
 
   return (

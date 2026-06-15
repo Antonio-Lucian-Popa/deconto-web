@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from './api-url';
+import { getApiBaseUrl, getAppPath } from './api-url';
 
 const API_BASE = getApiBaseUrl();
 
@@ -14,7 +14,7 @@ export function getAccessToken() {
 
 async function refreshAccessToken(): Promise<string | null> {
   try {
-    const res = await fetch('/api/auth/refresh', { method: 'POST' });
+    const res = await fetch(getAppPath('/api/auth/refresh'), { method: 'POST' });
     if (!res.ok) return null;
     const data = await res.json() as { accessToken: string };
     accessToken = data.accessToken;
@@ -46,7 +46,7 @@ export async function apiFetch<T>(
       return apiFetch<T>(path, options, false);
     }
     if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+      window.location.href = getAppPath('/login');
     }
     throw new Error('Unauthorized');
   }
@@ -90,7 +90,7 @@ export async function apiUpload<T>(path: string, formData: FormData, retry = tru
   if (res.status === 401 && retry) {
     const newToken = await refreshAccessToken();
     if (newToken) return apiUpload<T>(path, formData, false);
-    if (typeof window !== 'undefined') window.location.href = '/login';
+    if (typeof window !== 'undefined') window.location.href = getAppPath('/login');
     throw new Error('Unauthorized');
   }
 
