@@ -51,6 +51,11 @@ export interface Expense {
   merchant: string | null;
   merchantCif: string | null;
   notes: string | null;
+  fuelLiters: number | null;
+  fuelPricePerLiter: number | null;
+  accommodationCheckIn: string | null;
+  accommodationCheckOut: string | null;
+  accommodationNights: number | null;
   imageUrl: string | null;
   verified: boolean;
   createdAt: string;
@@ -82,6 +87,20 @@ export interface FleetDocument {
   status: DocStatus;
 }
 
+export interface CarLocation {
+  id: string;
+  carId: string;
+  userId: string;
+  latitude: number;
+  longitude: number;
+  accuracy: number | null;
+  heading: number | null;
+  speed: number | null;
+  source: string;
+  capturedAt: string;
+  createdAt: string;
+}
+
 export interface CarOverview {
   id: string;
   plateNumber: string;
@@ -93,6 +112,7 @@ export interface CarOverview {
   assignedUser: { id: string; firstName: string | null; lastName: string | null; email: string } | null;
   documents: FleetDocument[];
   totalCosts12m: number;
+  latestLocation: CarLocation | null;
 }
 
 export interface Car {
@@ -107,6 +127,7 @@ export interface Car {
   assignedUserId: string | null;
   createdAt: string;
   reminders?: Reminder[];
+  latestLocation?: CarLocation | null;
 }
 
 export type ReminderStatus = 'ACTIVE' | 'DUE_SOON' | 'OVERDUE' | 'COMPLETED';

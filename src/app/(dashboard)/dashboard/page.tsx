@@ -7,6 +7,7 @@ import type { StatsSummary, Trip } from '@/lib/api-types';
 import { Header } from '@/components/layout/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/use-auth';
 import {
   PieChart,
   Pie,
@@ -75,6 +76,10 @@ function formatDate(dateStr: string) {
   }).format(new Date(dateStr));
 }
 
+function pendingText(singular: string, plural: string) {
+  return (count: number) => (count === 1 ? singular : plural);
+}
+
 function StatCard({
   label,
   value,
@@ -111,6 +116,12 @@ function StatCard({
 
 export default function DashboardPage() {
   const t = useTranslations('dashboard');
+  const { user } = useAuth();
+  const recentTripStatus = user?.role === 'ACCOUNTANT' ? 'APPROVED' : 'SUBMITTED';
+  const recentTripsLabel = user?.role === 'ACCOUNTANT' ? 'Deconturi aprobate' : t('pendingTrips');
+  const recentTripsSub = user?.role === 'ACCOUNTANT'
+    ? pendingText('decont aprobat pentru contabilitate', 'deconturi aprobate pentru contabilitate')
+    : pendingText('decont așteaptă aprobare', 'deconturi așteaptă aprobare');
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['stats', 'summary'],
@@ -119,8 +130,8 @@ export default function DashboardPage() {
   });
 
   const { data: recentTrips, isLoading: tripsLoading } = useQuery({
-    queryKey: ['trips', 'recent-submitted'],
-    queryFn: () => apiFetch<Trip[]>('/api/trips?status=SUBMITTED'),
+    queryKey: ['trips', 'recent', recentTripStatus],
+    queryFn: () => apiFetch<Trip[]>(`/api/trips?status=${recentTripStatus}`),
     refetchInterval: 2 * 60 * 1000,
   });
 
@@ -149,11 +160,11 @@ export default function DashboardPage() {
         {/* KPI cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
-            label={t('pendingTrips')}
+            label={recentTripsLabel}
             value={pendingCount}
             icon={<Clock size={18} className="text-yellow-400" />}
             isLoading={tripsLoading}
-            sub={pendingCount === 1 ? 'decont aşteaptă aprobare' : 'deconturi aşteaptă aprobare'}
+            sub={recentTripsSub(pendingCount)}
           />
           <StatCard
             label={t('monthTotal')}
@@ -312,12 +323,14 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Recent submitted trips */}
+        {/* Recent trips for review/accounting */}
         <div className="bg-[#1a1a1a] border border-white/10 rounded-xl">
           <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-            <h2 className="text-white font-semibold">{t('recentTrips')}</h2>
+            <h2 className="text-white font-semibold">
+              {user?.role === 'ACCOUNTANT' ? 'Deconturi aprobate recente' : t('recentTrips')}
+            </h2>
             <Link
-              href="/deconturi?status=SUBMITTED"
+              href={`/deconturi?status=${recentTripStatus}`}
               className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1"
             >
               Vezi toate <ChevronRight size={14} />
@@ -332,7 +345,11 @@ export default function DashboardPage() {
           ) : recentTrips?.length === 0 ? (
             <div className="flex items-center gap-2 text-gray-500 text-sm px-5 py-8">
               <CheckCircle2 size={16} />
-              <span>Nu există deconturi în așteptare</span>
+              <span>
+                {user?.role === 'ACCOUNTANT'
+                  ? 'Nu există deconturi aprobate'
+                  : 'Nu există deconturi în așteptare'}
+              </span>
             </div>
           ) : (
             <div className="divide-y divide-white/5">

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { setAccessToken } from '@/lib/api-client';
+import { getApiBaseUrl } from '@/lib/api-url';
 import type { User } from '@/lib/api-types';
 
 interface AuthContextValue {
@@ -28,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setToken(data.accessToken);
           setAccessToken(data.accessToken);
           // Fetch user info
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+          const apiUrl = getApiBaseUrl();
           const userRes = await fetch(`${apiUrl}/api/users/me`, {
             headers: { Authorization: `Bearer ${data.accessToken}` },
           });

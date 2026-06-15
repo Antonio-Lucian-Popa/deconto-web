@@ -28,6 +28,21 @@ function formatDate(dateStr: string) {
   }).format(new Date(dateStr));
 }
 
+function expenseDetails(expense: TripDetail['expenses'][number]) {
+  if (expense.category === 'COMBUSTIBIL' && expense.fuelLiters != null && expense.fuelPricePerLiter != null) {
+    return `${expense.fuelLiters} L x ${formatRON(expense.fuelPricePerLiter)}/L`;
+  }
+  if (expense.category === 'CAZARE') {
+    const parts = [
+      expense.accommodationCheckIn ? `Check-in ${formatDate(expense.accommodationCheckIn)}` : null,
+      expense.accommodationCheckOut ? `Check-out ${formatDate(expense.accommodationCheckOut)}` : null,
+      expense.accommodationNights != null ? `${expense.accommodationNights} nopți` : null,
+    ].filter(Boolean);
+    return parts.length ? parts.join(' · ') : null;
+  }
+  return null;
+}
+
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: 'Activ',
   CLOSED: 'Închis',
@@ -254,7 +269,7 @@ export default function TripDetailPage({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/10">
-                  {['Data', 'Categorie', 'Comerciant', 'Note', 'Sumă', 'Bon'].map((h) => (
+                  {['Data', 'Categorie', 'Comerciant', 'Detalii', 'Note', 'Sumă', 'Bon'].map((h) => (
                     <th
                       key={h}
                       className="text-left text-xs font-medium text-gray-400 px-4 py-3"
@@ -267,7 +282,7 @@ export default function TripDetailPage({
               <tbody>
                 {trip.expenses.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center text-gray-500 py-12 text-sm">
+                    <td colSpan={7} className="text-center text-gray-500 py-12 text-sm">
                       Nicio cheltuială înregistrată
                     </td>
                   </tr>
@@ -294,6 +309,9 @@ export default function TripDetailPage({
                         {expense.merchantCif && (
                           <p className="text-gray-500 text-xs">CIF: {expense.merchantCif}</p>
                         )}
+                      </td>
+                      <td className="px-4 py-3 text-gray-300 text-sm max-w-56">
+                        <p>{expenseDetails(expense) ?? '—'}</p>
                       </td>
                       <td className="px-4 py-3 text-gray-400 text-sm max-w-48">
                         <p className="truncate">{expense.notes ?? '—'}</p>

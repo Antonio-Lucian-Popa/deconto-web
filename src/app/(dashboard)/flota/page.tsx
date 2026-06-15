@@ -8,7 +8,7 @@ import { Header } from '@/components/layout/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { Car, User, ChevronRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Car, User, ChevronRight, AlertTriangle, CheckCircle2, MapPin, ExternalLink } from 'lucide-react';
 
 function formatRON(amount: number) {
   return new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON', maximumFractionDigits: 0 }).format(amount);
@@ -16,6 +16,15 @@ function formatRON(amount: number) {
 
 function formatDate(dateStr: string) {
   return new Intl.DateTimeFormat('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(dateStr));
+}
+
+function formatDateTime(dateStr: string) {
+  return new Intl.DateTimeFormat('ro-RO', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(dateStr));
 }
 
 export default function FlotaPage() {
@@ -90,10 +99,9 @@ export default function FlotaPage() {
                 : 'border-white/10';
 
               return (
-                <Link
+                <div
                   key={car.id}
-                  href={`/flota/${car.id}`}
-                  className={`bg-[#1a1a1a] border ${borderColor} rounded-xl p-5 space-y-4 hover:bg-white/5 transition-colors group`}
+                  className={`bg-[#1a1a1a] border ${borderColor} rounded-xl p-5 space-y-4 transition-colors`}
                 >
                   {/* Header */}
                   <div className="flex items-start justify-between">
@@ -118,6 +126,46 @@ export default function FlotaPage() {
                       </span>
                     ) : (
                       <span className="text-gray-600 italic">Neasignat</span>
+                    )}
+                  </div>
+
+                  {/* GPS */}
+                  <div className="rounded-lg bg-white/5 border border-white/10 p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <MapPin size={14} className={car.latestLocation ? 'text-green-400' : 'text-gray-600'} />
+                        <span className="text-xs font-medium text-gray-400">GPS</span>
+                      </div>
+                      {car.latestLocation ? (
+                        <span className="text-[11px] text-gray-500">
+                          {formatDateTime(car.latestLocation.capturedAt)}
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-gray-600">Fără poziție</span>
+                      )}
+                    </div>
+                    {car.latestLocation && (
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-300 tabular-nums">
+                            {car.latestLocation.latitude.toFixed(5)}, {car.latestLocation.longitude.toFixed(5)}
+                          </p>
+                          {car.latestLocation.accuracy != null && (
+                            <p className="text-[11px] text-gray-600">
+                              Acuratețe {Math.round(car.latestLocation.accuracy)} m
+                            </p>
+                          )}
+                        </div>
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${car.latestLocation.latitude},${car.latestLocation.longitude}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(event) => event.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300"
+                        >
+                          Hartă <ExternalLink size={12} />
+                        </a>
+                      </div>
                     )}
                   </div>
 
@@ -149,10 +197,13 @@ export default function FlotaPage() {
                     )}
                   </div>
 
-                  <div className="flex items-center justify-end text-blue-400 text-xs group-hover:text-blue-300 transition-colors">
+                  <Link
+                    href={`/flota/${car.id}`}
+                    className="flex items-center justify-end text-blue-400 text-xs hover:text-blue-300 transition-colors"
+                  >
                     Detalii <ChevronRight size={14} />
-                  </div>
-                </Link>
+                  </Link>
+                </div>
               );
             })}
           </div>

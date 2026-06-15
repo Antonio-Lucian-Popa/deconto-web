@@ -1,4 +1,6 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+import { getApiBaseUrl } from './api-url';
+
+const API_BASE = getApiBaseUrl();
 
 let accessToken: string | null = null;
 

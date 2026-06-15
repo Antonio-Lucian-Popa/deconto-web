@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getApiBaseUrl } from '@/lib/api-url';
 
 export async function POST(req: NextRequest) {
   const refreshToken = req.cookies.get('refreshToken')?.value;
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+  const apiUrl = getApiBaseUrl();
 
   if (refreshToken) {
     await fetch(`${apiUrl}/api/auth/logout`, {

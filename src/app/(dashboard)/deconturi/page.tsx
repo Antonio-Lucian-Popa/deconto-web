@@ -10,6 +10,7 @@ import { Badge, type BadgeVariant } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
 import { useUsers, userDisplayName } from '@/hooks/use-users';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useState, useMemo } from 'react';
 import { ChevronRight, ChevronLeft, Search, Filter } from 'lucide-react';
 
@@ -46,9 +47,12 @@ const PAGE_SIZE = 15;
 export default function DeconturiPage() {
   const t = useTranslations('trips');
   const { user } = useAuth();
+  const searchParams = useSearchParams();
 
   // Filters
-  const [statusFilter, setStatusFilter] = useState<TripStatus | ''>('');
+  const [statusFilter, setStatusFilter] = useState<TripStatus | ''>(
+    (searchParams.get('status') as TripStatus | null) ?? ''
+  );
   const [userFilter, setUserFilter] = useState('');
   const [fromFilter, setFromFilter] = useState('');
   const [toFilter, setToFilter] = useState('');
@@ -56,17 +60,22 @@ export default function DeconturiPage() {
   const [page, setPage] = useState(1);
 
   const canFilterByUser = user?.role !== 'EMPLOYEE';
+  const isAccountant = user?.role === 'ACCOUNTANT';
+  const statusOptions: (TripStatus | '')[] = isAccountant
+    ? ['APPROVED']
+    : ['', 'ACTIVE', 'CLOSED', 'SUBMITTED', 'APPROVED', 'REJECTED'];
 
   // Build query string
   const queryStr = useMemo(() => {
     const params = new URLSearchParams();
-    if (statusFilter) params.set('status', statusFilter);
+    const effectiveStatus = isAccountant ? 'APPROVED' : statusFilter;
+    if (effectiveStatus) params.set('status', effectiveStatus);
     if (userFilter && canFilterByUser) params.set('userId', userFilter);
     if (fromFilter) params.set('from', fromFilter);
     if (toFilter) params.set('to', toFilter);
     const qs = params.toString();
     return qs ? `?${qs}` : '';
-  }, [statusFilter, userFilter, fromFilter, toFilter, canFilterByUser]);
+  }, [statusFilter, userFilter, fromFilter, toFilter, canFilterByUser, isAccountant]);
 
   const { data: trips, isLoading } = useQuery({
     queryKey: ['trips', queryStr],
@@ -120,12 +129,12 @@ export default function DeconturiPage() {
 
           {/* Status filter pills */}
           <div className="flex gap-1.5 flex-wrap">
-            {(['', 'ACTIVE', 'CLOSED', 'SUBMITTED', 'APPROVED', 'REJECTED'] as const).map((s) => (
+            {statusOptions.map((s) => (
               <button
                 key={s}
                 onClick={() => { setStatusFilter(s); resetPage(); }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  statusFilter === s
+                  (isAccountant ? s === 'APPROVED' : statusFilter === s)
                     ? 'bg-blue-600 text-white'
                     : 'bg-white/10 text-gray-400 hover:bg-white/20 hover:text-white'
                 }`}

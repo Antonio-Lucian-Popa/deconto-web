@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { use, useRef, useState } from 'react';
 import {
   ArrowLeft, Upload, Trash2, RefreshCw, FileText,
-  Image as ImageIcon, DollarSign, Bell,
+  Image as ImageIcon, DollarSign, Bell, MapPin, ExternalLink,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -25,6 +25,15 @@ function formatRON(amount: number, currency = 'RON') {
 
 function formatDate(dateStr: string) {
   return new Intl.DateTimeFormat('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(dateStr));
+}
+
+function formatDateTime(dateStr: string) {
+  return new Intl.DateTimeFormat('ro-RO', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(dateStr));
 }
 
 const REMINDER_STATUS_VARIANTS: Record<ReminderStatus, 'success' | 'warning' | 'danger' | 'gray'> = {
@@ -182,6 +191,43 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
               <p className="text-white font-medium">{String(item.value)}</p>
             </div>
           ))}
+        </div>
+
+        {/* GPS */}
+        <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <MapPin size={16} className={car.latestLocation ? 'text-green-400' : 'text-gray-600'} />
+                <h3 className="text-white font-semibold">Poziție GPS</h3>
+              </div>
+              {car.latestLocation ? (
+                <div className="space-y-1">
+                  <p className="text-gray-300 text-sm tabular-nums">
+                    {car.latestLocation.latitude.toFixed(5)}, {car.latestLocation.longitude.toFixed(5)}
+                  </p>
+                  <p className="text-gray-500 text-xs">
+                    Actualizat {formatDateTime(car.latestLocation.capturedAt)}
+                    {car.latestLocation.accuracy != null
+                      ? ` · acuratețe ${Math.round(car.latestLocation.accuracy)} m`
+                      : ''}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">Nu există încă o poziție GPS pentru această mașină.</p>
+              )}
+            </div>
+            {car.latestLocation && (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${car.latestLocation.latitude},${car.latestLocation.longitude}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-blue-400 hover:text-blue-300 hover:bg-white/10 transition-colors"
+              >
+                Deschide harta <ExternalLink size={14} />
+              </a>
+            )}
+          </div>
         </div>
 
         {/* Tabs */}
