@@ -1,0 +1,22 @@
+services:
+  frontend:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+    container_name: deconto-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+    expose:
+      - "3000"
+    networks:
+      - nova-net
+
+networks:
+  nova-net:
+    external: true
