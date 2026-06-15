@@ -28,7 +28,12 @@ interface NavItem {
   badge?: number;
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  className?: string;
+  onNavigate?: () => void;
+}
+
+export function Sidebar({ className, onNavigate }: SidebarProps) {
   const t = useTranslations('nav');
   const tAuth = useTranslations('auth');
   const pathname = usePathname();
@@ -91,7 +96,7 @@ export function Sidebar() {
   );
 
   return (
-    <aside className="w-64 min-h-screen bg-[#111111] border-r border-white/10 flex flex-col flex-shrink-0">
+    <aside className={clsx('w-64 min-h-screen bg-[#111111] border-r border-white/10 flex flex-col flex-shrink-0', className)}>
       {/* Logo */}
       <div className="p-5 border-b border-white/10">
         <span className="text-xl font-bold text-white">Deconto</span>
@@ -110,6 +115,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={clsx(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors',
                 isActive

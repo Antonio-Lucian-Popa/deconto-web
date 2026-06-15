@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
-import { Plus, Users, Copy, Check } from 'lucide-react';
+import { Plus, Users, Copy, Check, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
@@ -46,6 +46,11 @@ export default function EchipaPage() {
   const [inviteRole, setInviteRole] = useState<'MANAGER' | 'ACCOUNTANT' | 'EMPLOYEE'>('EMPLOYEE');
   const [inviteResult, setInviteResult] = useState<InviteResult | null>(null);
   const [copiedPwd, setCopiedPwd] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [editRole, setEditRole] = useState<UserRole>('EMPLOYEE');
+  const [editIsActive, setEditIsActive] = useState(true);
 
   const { data: users, isLoading } = useQuery({
     queryKey: ['users'],
@@ -71,6 +76,37 @@ export default function EchipaPage() {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  const updateMutation = useMutation({
+    mutationFn: () => {
+      if (!editingUser) throw new Error('Utilizator lipsă');
+      return apiFetch<User>(`/api/users/${editingUser.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          firstName: editFirstName.trim() || null,
+          lastName: editLastName.trim() || null,
+          role: editRole,
+          isActive: editIsActive,
+        }),
+      });
+    },
+    onSuccess: () => {
+      toast.success('Utilizator actualizat');
+      setEditingUser(null);
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (userId: string) =>
+      apiFetch<void>(`/api/users/${userId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      toast.success('Utilizator șters');
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
   function handleCloseInvite() {
     setShowInvite(false);
     setInviteResult(null);
@@ -89,12 +125,30 @@ export default function EchipaPage() {
 
   const isAdmin = currentUser?.role === 'ADMIN';
 
+  function openEditModal(user: User) {
+    setEditingUser(user);
+    setEditFirstName(user.firstName ?? '');
+    setEditLastName(user.lastName ?? '');
+    setEditRole(user.role);
+    setEditIsActive(user.isActive !== false);
+  }
+
+  function handleDeleteUser(user: User) {
+    if (user.id === currentUser?.id) {
+      toast.error('Nu poți șterge propriul cont');
+      return;
+    }
+    const label = userDisplayName(user);
+    if (!window.confirm(`Ștergi utilizatorul ${label}? Contul va fi dezactivat.`)) return;
+    deleteMutation.mutate(user.id);
+  }
+
   return (
     <div className="flex flex-col h-full overflow-auto">
       <Header title={t('title')} />
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-4 sm:p-6 space-y-6">
         {/* Action bar */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2 text-gray-400 text-sm">
             <Users size={16} />
             {!isLoading && (
@@ -104,19 +158,19 @@ export default function EchipaPage() {
             )}
           </div>
           {isAdmin && (
-            <Button onClick={() => setShowInvite(true)}>
+            <Button onClick={() => setShowInvite(true)} className="w-full sm:w-auto justify-center">
               <Plus size={16} /> {t('inviteUser')}
             </Button>
           )}
         </div>
 
         {/* Users table */}
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden">
+        <div className="hidden md:block bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/10">
-                  {['Utilizator', t('role'), t('status'), 'Înregistrat'].map((h) => (
+                  {['Utilizator', t('role'), t('status'), 'Înregistrat', ...(isAdmin ? ['Acțiuni'] : [])].map((h) => (
                     <th key={h} className="text-left text-xs font-medium text-gray-400 px-4 py-3">
                       {h}
                     </th>
@@ -127,7 +181,7 @@ export default function EchipaPage() {
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="border-b border-white/5">
-                      {[1, 2, 3, 4].map((j) => (
+                      {Array.from({ length: isAdmin ? 5 : 4 }).map((_, j) => (
                         <td key={j} className="px-4 py-3">
                           <Skeleton className="h-5 w-full" />
                         </td>
@@ -136,7 +190,7 @@ export default function EchipaPage() {
                   ))
                 ) : users?.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="text-center text-gray-500 py-12 text-sm">
+                    <td colSpan={isAdmin ? 5 : 4} className="text-center text-gray-500 py-12 text-sm">
                       Nu există utilizatori
                     </td>
                   </tr>
@@ -179,12 +233,107 @@ export default function EchipaPage() {
                       <td className="px-4 py-3 text-gray-400 text-sm">
                         {new Intl.DateTimeFormat('ro-RO').format(new Date(u.createdAt))}
                       </td>
+                      {isAdmin && (
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => openEditModal(u)}
+                              className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-gray-300 hover:bg-white/10 hover:text-white"
+                              title="Editează"
+                            >
+                              <Pencil size={15} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(u)}
+                              disabled={u.id === currentUser?.id || deleteMutation.isPending}
+                              className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-red-300 hover:bg-red-500/10 hover:text-red-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                              title="Șterge"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div className="md:hidden space-y-3">
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-[#1a1a1a] border border-white/10 rounded-xl p-4 space-y-3">
+                <Skeleton className="h-5 w-2/3" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-8 w-1/2" />
+              </div>
+            ))
+          ) : users?.length === 0 ? (
+            <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-8 text-center text-gray-500 text-sm">
+              Nu există utilizatori
+            </div>
+          ) : (
+            users?.map((u) => (
+              <div
+                key={u.id}
+                className={`bg-[#1a1a1a] border border-white/10 rounded-xl p-4 space-y-4 ${
+                  u.id === currentUser?.id ? 'bg-blue-600/5 border-blue-500/20' : ''
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-sm font-medium">
+                      {(u.firstName ?? u.email).charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-white text-sm font-medium truncate">
+                      {userDisplayName(u)}
+                      {u.id === currentUser?.id && (
+                        <span className="ml-2 text-xs text-blue-400">(tu)</span>
+                      )}
+                    </p>
+                    <p className="text-gray-400 text-xs truncate">{u.email}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <p className="text-gray-500 mb-1">Rol</p>
+                    <Badge variant={ROLE_VARIANTS[u.role]}>{ROLE_LABELS[u.role]}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 mb-1">Status</p>
+                    <Badge variant={u.isActive !== false ? 'success' : 'danger'}>
+                      {u.isActive !== false ? t('active') : t('inactive')}
+                    </Badge>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-gray-500 mb-1">Înregistrat</p>
+                    <p className="text-gray-300">{new Intl.DateTimeFormat('ro-RO').format(new Date(u.createdAt))}</p>
+                  </div>
+                </div>
+                {isAdmin && (
+                  <div className="flex gap-2 pt-1">
+                    <Button variant="secondary" size="sm" className="flex-1 justify-center" onClick={() => openEditModal(u)}>
+                      <Pencil size={14} /> Editează
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      className="flex-1 justify-center"
+                      onClick={() => handleDeleteUser(u)}
+                      disabled={u.id === currentUser?.id || deleteMutation.isPending}
+                    >
+                      <Trash2 size={14} /> Șterge
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -229,7 +378,7 @@ export default function EchipaPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
                 label="Prenume"
                 value={inviteFirstName}
@@ -255,7 +404,7 @@ export default function EchipaPage() {
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as typeof inviteRole)}
-                className="w-full px-3 py-2 bg-[#262626] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-[#262626] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
               >
                 <option value="EMPLOYEE">Angajat</option>
                 <option value="MANAGER">Manager</option>
@@ -270,6 +419,77 @@ export default function EchipaPage() {
                 disabled={!inviteEmail.trim()}
               >
                 Invită utilizator
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={editingUser != null}
+        onClose={() => setEditingUser(null)}
+        title="Editează utilizator"
+        size="sm"
+      >
+        {editingUser && (
+          <div className="space-y-4">
+            <div className="p-3 bg-white/5 border border-white/10 rounded-lg">
+              <p className="text-white text-sm font-medium truncate">{editingUser.email}</p>
+              {editingUser.id === currentUser?.id && (
+                <p className="text-blue-400 text-xs mt-1">Acesta este contul tău.</p>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input
+                label="Prenume"
+                value={editFirstName}
+                onChange={(e) => setEditFirstName(e.target.value)}
+                placeholder="Ion"
+              />
+              <Input
+                label="Nume"
+                value={editLastName}
+                onChange={(e) => setEditLastName(e.target.value)}
+                placeholder="Popescu"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Rol</label>
+              <select
+                value={editRole}
+                onChange={(e) => setEditRole(e.target.value as UserRole)}
+                disabled={editingUser.id === currentUser?.id}
+                className="w-full px-3 py-2 bg-[#262626] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="ADMIN">Admin</option>
+                <option value="MANAGER">Manager</option>
+                <option value="ACCOUNTANT">Contabil</option>
+                <option value="EMPLOYEE">Angajat</option>
+              </select>
+            </div>
+            <label className="flex items-center justify-between gap-3 p-3 bg-[#262626] border border-white/10 rounded-lg">
+              <span>
+                <span className="block text-sm font-medium text-gray-200">Cont activ</span>
+                <span className="block text-xs text-gray-500">Utilizatorul poate intra în aplicație.</span>
+              </span>
+              <input
+                type="checkbox"
+                checked={editIsActive}
+                onChange={(e) => setEditIsActive(e.target.checked)}
+                disabled={editingUser.id === currentUser?.id}
+                className="h-5 w-5 accent-blue-600 disabled:opacity-40"
+              />
+            </label>
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-1">
+              <Button variant="secondary" onClick={() => setEditingUser(null)} className="justify-center">
+                Anulează
+              </Button>
+              <Button
+                onClick={() => updateMutation.mutate()}
+                isLoading={updateMutation.isPending}
+                className="justify-center"
+              >
+                Salvează
               </Button>
             </div>
           </div>
