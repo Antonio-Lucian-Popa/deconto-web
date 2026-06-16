@@ -17,14 +17,22 @@ export interface Trip {
   id: string;
   companyId: string;
   userId: string;
+  tripNumber: string | null;
+  departureLocation: string;
   destination: string;
   purpose: string | null;
   startDate: string;
+  departureTime: string | null;
   endDate: string | null;
+  arrivalTime: string | null;
   budget: number | null;
   carId: string | null;
   kmStart: number | null;
   kmEnd: number | null;
+  kmUrban: number | null;
+  kmExtraUrban: number | null;
+  fuelAtDeparture: number | null;
+  fuelAtArrival: number | null;
   status: TripStatus;
   createdAt: string;
   updatedAt: string;
@@ -34,7 +42,7 @@ export interface Trip {
 
 export interface TripDetail extends Trip {
   expenses: Expense[];
-  car: { id: string; make: string; model: string; plateNumber: string } | null;
+  car: { id: string; make: string; model: string; plateNumber: string; fuelConsumptionPer100km: number | null } | null;
 }
 
 export type ExpenseCategory = 'COMBUSTIBIL' | 'MASA' | 'CAZARE' | 'TRANSPORT' | 'DIURNA' | 'ALTELE';
@@ -61,7 +69,7 @@ export interface Expense {
   createdAt: string;
 }
 
-export type ReportType = 'TRIP' | 'MONTHLY';
+export type ReportType = 'TRIP' | 'MONTHLY' | 'FOAIE_PARCURS';
 
 export interface Report {
   id: string;
