@@ -213,6 +213,21 @@ export interface Company {
   settings: Record<string, unknown> | null;
 }
 
+export interface AiModelOption {
+  id: string;
+  label: string;
+  description: string;
+}
+
+export interface CompanyAiSettings {
+  enabled: boolean;
+  provider: 'anthropic';
+  model: string;
+  hasApiKey: boolean;
+  maskedApiKey: string | null;
+  availableModels: AiModelOption[];
+}
+
 export interface LoginResponse {
   user: User;
   accessToken: string;
