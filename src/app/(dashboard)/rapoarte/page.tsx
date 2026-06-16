@@ -228,8 +228,8 @@ export default function RapoartePage() {
                         className="border-b border-white/5 hover:bg-white/5 transition-colors"
                       >
                         <td className="px-4 py-3">
-                          <Badge variant={r.type === 'TRIP' ? 'default' : 'info'}>
-                            {r.type === 'TRIP' ? 'Delegaţie' : 'Lunar'}
+                          <Badge variant={r.type === 'TRIP' ? 'default' : r.type === 'FOAIE_PARCURS' ? 'warning' : 'info'}>
+                            {r.type === 'TRIP' ? 'Delegaţie' : r.type === 'FOAIE_PARCURS' ? 'Foaie Parcurs' : 'Lunar'}
                           </Badge>
                         </td>
                         <td className="px-4 py-3 text-gray-300 text-sm">

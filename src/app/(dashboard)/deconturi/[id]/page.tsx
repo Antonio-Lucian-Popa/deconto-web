@@ -89,6 +89,7 @@ export default function TripDetailPage({
   const [rejectReason, setRejectReason] = useState('');
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [generatedReport, setGeneratedReport] = useState<Report | null>(null);
+  const [generatedFoaieParcurs, setGeneratedFoaieParcurs] = useState<Report | null>(null);
   const [sendingReport, setSendingReport] = useState(false);
 
   const { data: trip, isLoading } = useQuery({
@@ -130,6 +131,15 @@ export default function TripDetailPage({
     onSuccess: (report) => {
       toast.success('Raport PDF generat');
       setGeneratedReport(report);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const foaieParcursMutation = useMutation({
+    mutationFn: () => apiFetch<Report>(`/api/reports/foaie-parcurs/${id}`, { method: 'POST' }),
+    onSuccess: (report) => {
+      toast.success('Foaie de parcurs generată');
+      setGeneratedFoaieParcurs(report);
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -202,18 +212,41 @@ export default function TripDetailPage({
         </div>
 
         {/* Info cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {[
+            { label: 'Nr. document', value: trip.tripNumber ?? '—' },
             { label: 'Angajat', value: tripUser ? userDisplayName(tripUser) : '—' },
+            { label: 'Plecare din', value: trip.departureLocation },
+            { label: 'Destinație', value: trip.destination },
             {
               label: 'Perioadă',
               value: `${formatDate(trip.startDate)}${trip.endDate ? ` — ${formatDate(trip.endDate)}` : ''}`,
+            },
+            {
+              label: 'Ore plecare/sosire',
+              value: trip.departureTime || trip.arrivalTime
+                ? `${trip.departureTime ?? '—'} → ${trip.arrivalTime ?? '—'}`
+                : '—',
             },
             {
               label: 'Kilometri',
               value:
                 trip.kmStart != null
                   ? `${trip.kmStart} → ${trip.kmEnd ?? '?'} km`
+                  : '—',
+            },
+            {
+              label: 'Km urban / extraurban',
+              value:
+                trip.kmUrban != null || trip.kmExtraUrban != null
+                  ? `${trip.kmUrban ?? 0} / ${trip.kmExtraUrban ?? 0} km`
+                  : '—',
+            },
+            {
+              label: 'Combustibil plecare/sosire',
+              value:
+                trip.fuelAtDeparture != null || trip.fuelAtArrival != null
+                  ? `${trip.fuelAtDeparture ?? '—'} L → ${trip.fuelAtArrival ?? '—'} L`
                   : '—',
             },
             {
@@ -399,6 +432,35 @@ export default function TripDetailPage({
                 <Send size={16} /> Trimite la contabilitate
               </Button>
             </>
+          )}
+
+          {/* Foaie de Parcurs — only when car is assigned */}
+          {trip.carId && (
+            !generatedFoaieParcurs ? (
+              <Button
+                variant="secondary"
+                onClick={() => foaieParcursMutation.mutate()}
+                isLoading={foaieParcursMutation.isPending}
+              >
+                <FileText size={16} /> Foaie de Parcurs
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={() => handleDownloadReport(generatedFoaieParcurs.id)}
+                >
+                  <Download size={16} /> Descarcă Foaie Parcurs
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => handleSendReport(generatedFoaieParcurs.id)}
+                  isLoading={sendingReport}
+                >
+                  <Send size={16} /> Trimite Foaie Parcurs
+                </Button>
+              </>
+            )
           )}
         </div>
       </div>
