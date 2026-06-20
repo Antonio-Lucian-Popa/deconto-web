@@ -10,8 +10,8 @@ import { Badge, type BadgeVariant } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
 import { useUsers, userDisplayName } from '@/hooks/use-users';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useMemo, useEffect } from 'react';
 import { ChevronRight, ChevronLeft, Search, Filter } from 'lucide-react';
 
 function formatRON(amount: number) {
@@ -47,6 +47,7 @@ const PAGE_SIZE = 15;
 export default function DeconturiPage() {
   const t = useTranslations('trips');
   const { user } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   // Filters
@@ -59,8 +60,15 @@ export default function DeconturiPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
+  useEffect(() => {
+    const status = searchParams.get('status') as TripStatus | null;
+    setStatusFilter(status ?? '');
+    setPage(1);
+  }, [searchParams]);
+
   const canFilterByUser = user?.role !== 'EMPLOYEE';
   const isAccountant = user?.role === 'ACCOUNTANT';
+  const canApprove = user?.role === 'ADMIN' || user?.role === 'MANAGER';
   const statusOptions: (TripStatus | '')[] = isAccountant
     ? ['APPROVED']
     : ['', 'ACTIVE', 'CLOSED', 'SUBMITTED', 'APPROVED', 'REJECTED'];
@@ -109,6 +117,12 @@ export default function DeconturiPage() {
     setPage(1);
   }
 
+  function selectStatus(status: TripStatus | '') {
+    setStatusFilter(status);
+    resetPage();
+    router.replace(status ? `/deconturi?status=${status}` : '/deconturi', { scroll: false });
+  }
+
   return (
     <div className="flex flex-col h-full overflow-auto">
       <Header title={t('title')} />
@@ -132,7 +146,7 @@ export default function DeconturiPage() {
             {statusOptions.map((s) => (
               <button
                 key={s}
-                onClick={() => { setStatusFilter(s); resetPage(); }}
+                onClick={() => selectStatus(s)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   (isAccountant ? s === 'APPROVED' : statusFilter === s)
                     ? 'bg-blue-600 text-white'
@@ -223,13 +237,25 @@ export default function DeconturiPage() {
                     const overBudget =
                       trip.budget != null && (trip.totalExpenses ?? 0) > trip.budget;
                     const employee = usersMap.get(trip.userId);
+                    const needsApproval = canApprove && trip.status === 'SUBMITTED';
                     return (
                       <tr
                         key={trip.id}
-                        className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                        className={`border-b transition-colors ${
+                          needsApproval
+                            ? 'border-blue-500/20 bg-blue-500/[0.06] hover:bg-blue-500/10'
+                            : 'border-white/5 hover:bg-white/5'
+                        }`}
                       >
                         <td className="px-4 py-3">
-                          <p className="text-white text-sm font-medium">{trip.destination}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-white text-sm font-medium">{trip.destination}</p>
+                            {needsApproval && (
+                              <span className="rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                                Nou
+                              </span>
+                            )}
+                          </div>
                           {trip.purpose && (
                             <p className="text-gray-500 text-xs truncate max-w-48">
                               {trip.purpose}

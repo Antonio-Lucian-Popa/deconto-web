@@ -48,6 +48,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
   });
 
   const pendingCount = submittedTrips?.length ?? 0;
+  const tripsHref = pendingCount > 0 ? '/deconturi?status=SUBMITTED' : '/deconturi';
 
   const navItems: NavItem[] = [
     {
@@ -56,7 +57,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       label: t('dashboard'),
     },
     {
-      href: '/deconturi',
+      href: tripsHref,
       icon: <FileText size={18} />,
       label: t('deconturi'),
       badge: pendingCount > 0 ? pendingCount : undefined,
@@ -110,7 +111,9 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       {/* Nav */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {filteredItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const itemPathname = item.href.split('?')[0];
+          const isActive =
+            pathname === itemPathname || pathname.startsWith(`${itemPathname}/`);
           return (
             <Link
               key={item.href}
