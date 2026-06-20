@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
+import { useAuth } from '@/hooks/use-auth';
 import { useUsers, userDisplayName } from '@/hooks/use-users';
 import { Download, Send, Plus, FileText, ChevronDown, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -34,6 +35,7 @@ function formatMonth(monthStr: string | null) {
 
 export default function RapoartePage() {
   const t = useTranslations('reports');
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showNew, setShowNew] = useState(false);
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
@@ -53,6 +55,7 @@ export default function RapoartePage() {
     () => new Map((users ?? []).map((u) => [u.id, u])),
     [users]
   );
+  const canSendToAccounting = user != null && user.role !== 'ACCOUNTANT';
 
   const generateMutation = useMutation({
     mutationFn: () =>
@@ -270,15 +273,17 @@ export default function RapoartePage() {
                               <Download size={15} />
                               {downloadingId === r.id ? 'Se descarcă...' : 'PDF'}
                             </button>
-                            <button
-                              onClick={() => handleSend(r.id)}
-                              disabled={sendingId === r.id}
-                              className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-xs disabled:opacity-40"
-                              title="Trimite la contabilitate"
-                            >
-                              <Send size={15} />
-                              {sendingId === r.id ? 'Se trimite...' : 'Trimite'}
-                            </button>
+                            {canSendToAccounting && (
+                              <button
+                                onClick={() => handleSend(r.id)}
+                                disabled={sendingId === r.id}
+                                className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-xs disabled:opacity-40"
+                                title="Trimite la contabilitate"
+                              >
+                                <Send size={15} />
+                                {sendingId === r.id ? 'Se trimite...' : 'Trimite'}
+                              </button>
+                            )}
                             <button
                               onClick={() => handleDelete(r.id)}
                               disabled={deletingId === r.id}

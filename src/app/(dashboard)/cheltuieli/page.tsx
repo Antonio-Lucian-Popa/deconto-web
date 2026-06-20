@@ -17,10 +17,12 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  FileSpreadsheet,
   Image as ImageIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useMemo } from 'react';
+import type { SheetData } from 'write-excel-file/browser';
 
 const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   COMBUSTIBIL: 'Combustibil',
@@ -80,7 +82,8 @@ export default function CheltuieliPage() {
   const [toFilter, setToFilter] = useState('');
   const [page, setPage] = useState(1);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
-  const [exporting, setExporting] = useState(false);
+  const [exportingCsv, setExportingCsv] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
 
   // Build API query params
   const queryStr = useMemo(() => {
@@ -131,8 +134,8 @@ export default function CheltuieliPage() {
     setPage(1);
   }
 
-  async function handleExport() {
-    setExporting(true);
+  async function handleCsvExport() {
+    setExportingCsv(true);
     try {
       const params = new URLSearchParams();
       if (fromFilter) params.set('from', fromFilter);
@@ -144,9 +147,92 @@ export default function CheltuieliPage() {
         'cheltuieli-export.csv'
       );
     } catch {
-      toast.error('Exportul a eşuat');
+      toast.error('Exportul CSV a eşuat');
     } finally {
-      setExporting(false);
+      setExportingCsv(false);
+    }
+  }
+
+  async function handleExcelExport() {
+    setExportingExcel(true);
+    try {
+      const { default: writeXlsxFile } = await import('write-excel-file/browser');
+
+      const excelDate = (date: string | null) => {
+        if (!date) return null;
+        const [year, month, day] = date.slice(0, 10).split('-').map(Number);
+        return new Date(year, month - 1, day);
+      };
+
+      const headers = [
+        'Data',
+        'Angajat',
+        'Categorie',
+        'Comerciant',
+        'CIF',
+        'Note',
+        'Sumă',
+        'Monedă',
+        'Verificat',
+        'Litri combustibil',
+        'Preț/litru',
+        'Check-in',
+        'Check-out',
+        'Nopți',
+      ];
+      const data: SheetData = [
+        headers.map((value) => ({
+          value,
+          fontWeight: 'bold',
+          textColor: '#FFFFFF',
+          backgroundColor: '#2563EB',
+          height: 24,
+        })),
+      ];
+
+      filtered.forEach((expense) => {
+        const employee = usersMap.get(expense.userId);
+        data.push([
+          { value: excelDate(expense.date) ?? undefined, type: Date, format: 'dd.mm.yyyy' },
+          employee ? userDisplayName(employee) : '',
+          CATEGORY_LABELS[expense.category],
+          expense.merchant ?? '',
+          expense.merchantCif ?? '',
+          { value: expense.notes ?? '', wrap: true },
+          { value: expense.amount, type: Number, format: '#,##0.00' },
+          expense.currency,
+          expense.verified ? 'Da' : 'Nu',
+          expense.fuelLiters == null
+            ? null
+            : { value: expense.fuelLiters, type: Number, format: '#,##0.00' },
+          expense.fuelPricePerLiter == null
+            ? null
+            : { value: expense.fuelPricePerLiter, type: Number, format: '#,##0.00' },
+          expense.accommodationCheckIn
+            ? { value: excelDate(expense.accommodationCheckIn)!, type: Date, format: 'dd.mm.yyyy' }
+            : null,
+          expense.accommodationCheckOut
+            ? { value: excelDate(expense.accommodationCheckOut)!, type: Date, format: 'dd.mm.yyyy' }
+            : null,
+          expense.accommodationNights,
+        ]);
+      });
+
+      const file = writeXlsxFile(data, {
+        sheet: 'Cheltuieli',
+        stickyRowsCount: 1,
+        showGridLines: false,
+        columns: [13, 24, 16, 28, 16, 36, 14, 10, 12, 18, 14, 13, 13, 9].map(
+          (width) => ({ width })
+        ),
+      });
+      await file.toFile(
+        `cheltuieli-${fromFilter || 'inceput'}-${toFilter || 'prezent'}.xlsx`
+      );
+    } catch {
+      toast.error('Exportul Excel a eşuat');
+    } finally {
+      setExportingExcel(false);
     }
   }
 
@@ -250,10 +336,18 @@ export default function CheltuieliPage() {
             />
           </div>
 
-          {/* Export CSV */}
-          <div className="ml-auto">
-            <Button variant="secondary" isLoading={exporting} onClick={handleExport}>
+          {/* Exports */}
+          <div className="ml-auto flex gap-2">
+            <Button variant="secondary" isLoading={exportingCsv} onClick={handleCsvExport}>
               <Download size={16} /> {tCommon('export')}
+            </Button>
+            <Button
+              variant="secondary"
+              isLoading={exportingExcel}
+              disabled={filtered.length === 0}
+              onClick={handleExcelExport}
+            >
+              <FileSpreadsheet size={16} /> Exportă Excel
             </Button>
           </div>
         </div>

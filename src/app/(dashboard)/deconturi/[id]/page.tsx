@@ -194,6 +194,7 @@ export default function TripDetailPage({
   const totalExpenses = trip.expenses.reduce((s, e) => s + e.amount, 0);
   const overBudget = trip.budget != null && totalExpenses > trip.budget;
   const tripUser = usersMap.get(trip.userId);
+  const canSendToAccounting = user != null && user.role !== 'ACCOUNTANT';
 
   return (
     <div className="flex flex-col h-full overflow-auto">
@@ -424,13 +425,15 @@ export default function TripDetailPage({
               >
                 <Download size={16} /> Descarcă PDF
               </Button>
-              <Button
-                variant="secondary"
-                onClick={() => handleSendReport(generatedReport.id)}
-                isLoading={sendingReport}
-              >
-                <Send size={16} /> Trimite la contabilitate
-              </Button>
+              {canSendToAccounting && (
+                <Button
+                  variant="secondary"
+                  onClick={() => handleSendReport(generatedReport.id)}
+                  isLoading={sendingReport}
+                >
+                  <Send size={16} /> Trimite la contabilitate
+                </Button>
+              )}
             </>
           )}
 
@@ -452,13 +455,15 @@ export default function TripDetailPage({
                 >
                   <Download size={16} /> Descarcă Foaie Parcurs
                 </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => handleSendReport(generatedFoaieParcurs.id)}
-                  isLoading={sendingReport}
-                >
-                  <Send size={16} /> Trimite Foaie Parcurs
-                </Button>
+                {canSendToAccounting && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => handleSendReport(generatedFoaieParcurs.id)}
+                    isLoading={sendingReport}
+                  >
+                    <Send size={16} /> Trimite Foaie Parcurs
+                  </Button>
+                )}
               </>
             )
           )}
