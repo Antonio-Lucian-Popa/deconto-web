@@ -239,9 +239,9 @@ export default function CheltuieliPage() {
   return (
     <div className="flex flex-col h-full overflow-auto">
       <Header title={t('title')} />
-      <div className="flex-1 p-6 space-y-4">
+      <div className="app-content space-y-4">
         {/* Filters */}
-        <div className="flex flex-wrap gap-3 items-end">
+        <div className="app-filter-bar">
           {/* Search */}
           <div className="relative">
             <Search
@@ -256,7 +256,7 @@ export default function CheltuieliPage() {
                 resetPage();
               }}
               placeholder="Caută comerciant..."
-              className="pl-9 pr-3 py-2 bg-[#1a1a1a] border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
+              className="app-input w-full pl-9 sm:w-56"
             />
           </div>
 
@@ -269,8 +269,8 @@ export default function CheltuieliPage() {
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 categoryFilter === ''
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white/10 text-gray-400 hover:bg-white/20 hover:text-white'
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-950/30'
+                  : 'bg-white/[0.07] text-slate-400 hover:bg-white/[0.12] hover:text-white'
               }`}
             >
               Toate
@@ -284,8 +284,8 @@ export default function CheltuieliPage() {
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   categoryFilter === cat
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white/10 text-gray-400 hover:bg-white/20 hover:text-white'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-950/30'
+                    : 'bg-white/[0.07] text-slate-400 hover:bg-white/[0.12] hover:text-white'
                 }`}
               >
                 {CATEGORY_LABELS[cat]}
@@ -301,7 +301,7 @@ export default function CheltuieliPage() {
                 setUserFilter(e.target.value);
                 resetPage();
               }}
-              className="px-3 py-2 bg-[#1a1a1a] border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="app-select w-full sm:w-auto"
             >
               <option value="">Toți angajații</option>
               {users.map((u) => (
@@ -322,9 +322,9 @@ export default function CheltuieliPage() {
                 setFromFilter(e.target.value);
                 resetPage();
               }}
-              className="px-2 py-2 bg-[#1a1a1a] border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-36"
+              className="app-input w-[9rem]"
             />
-            <span className="text-gray-500 text-sm">—</span>
+            <span className="text-slate-500 text-sm">-</span>
             <input
               type="date"
               value={toFilter}
@@ -332,12 +332,12 @@ export default function CheltuieliPage() {
                 setToFilter(e.target.value);
                 resetPage();
               }}
-              className="px-2 py-2 bg-[#1a1a1a] border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-36"
+              className="app-input w-[9rem]"
             />
           </div>
 
           {/* Exports */}
-          <div className="ml-auto flex gap-2">
+          <div className="sm:ml-auto flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
             <Button variant="secondary" isLoading={exportingCsv} onClick={handleCsvExport}>
               <Download size={16} /> {tCommon('export')}
             </Button>
@@ -354,13 +354,13 @@ export default function CheltuieliPage() {
 
         {/* Summary bar */}
         {!isLoading && filtered.length > 0 && (
-          <div className="flex items-center gap-6 px-4 py-2.5 bg-[#1a1a1a] border border-white/10 rounded-lg text-sm">
+          <div className="flex items-center gap-6 px-4 py-2.5 app-panel text-sm">
             <span className="text-gray-400">
-              <span className="text-white font-medium">{filtered.length}</span> cheltuieli
+              <span className="text-slate-950 font-medium">{filtered.length}</span> cheltuieli
             </span>
             <span className="text-gray-400">
               Total RON:{' '}
-              <span className="text-white font-medium">
+              <span className="text-slate-950 font-medium">
                 {new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(
                   totalRON
                 )}
@@ -370,11 +370,11 @@ export default function CheltuieliPage() {
         )}
 
         {/* Table */}
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden">
+        <div className="app-panel overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="app-table">
               <thead>
-                <tr className="border-b border-white/10">
+                <tr>
                   {[
                     'Data',
                     canFilterByUser ? 'Angajat' : null,
@@ -389,7 +389,7 @@ export default function CheltuieliPage() {
                     .map((h) => (
                       <th
                         key={h as string}
-                        className="text-left text-xs font-medium text-gray-400 px-4 py-3 whitespace-nowrap"
+                        className="whitespace-nowrap"
                       >
                         {h}
                       </th>
@@ -399,7 +399,7 @@ export default function CheltuieliPage() {
               <tbody>
                 {isLoading ? (
                   Array.from({ length: 10 }).map((_, i) => (
-                    <tr key={i} className="border-b border-white/5">
+                    <tr key={i}>
                       {Array.from({ length: canFilterByUser ? 8 : 7 }).map((_, j) => (
                         <td key={j} className="px-4 py-3">
                           <Skeleton className="h-5 w-full" />
@@ -422,7 +422,7 @@ export default function CheltuieliPage() {
                     return (
                       <tr
                         key={e.id}
-                        className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                        className="transition-colors"
                       >
                         <td className="px-4 py-3 text-gray-300 text-sm whitespace-nowrap">
                           {formatDate(e.date)}
@@ -495,7 +495,7 @@ export default function CheltuieliPage() {
 
           {/* Pagination */}
           {!isLoading && filtered.length > PAGE_SIZE && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-white/10">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-white/10">
               <span className="text-xs text-gray-500">
                 {(page - 1) * PAGE_SIZE + 1}–
                 {Math.min(page * PAGE_SIZE, filtered.length)} din {filtered.length}

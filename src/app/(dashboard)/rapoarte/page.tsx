@@ -118,7 +118,7 @@ export default function RapoartePage() {
   return (
     <div className="flex flex-col h-full overflow-auto">
       <Header title={t('title')} />
-      <div className="flex-1 p-6 space-y-6">
+      <div className="app-content space-y-6">
         {/* Action bar */}
         <div className="flex justify-end">
           <Button onClick={() => setShowNew(true)}>
@@ -142,7 +142,7 @@ export default function RapoartePage() {
                 type="month"
                 value={month}
                 onChange={(e) => setMonth(e.target.value)}
-                className="w-full px-3 py-2 bg-[#262626] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="app-input w-full"
               />
             </div>
             <div>
@@ -153,7 +153,7 @@ export default function RapoartePage() {
                 <select
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#262626] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none pr-8"
+                  className="app-select w-full"
                 >
                   <option value="">{t('allEmployees')}</option>
                   {users?.map((u) => (
@@ -183,11 +183,11 @@ export default function RapoartePage() {
         </Modal>
 
         {/* Reports table */}
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden">
+        <div className="app-panel overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="app-table">
               <thead>
-                <tr className="border-b border-white/10">
+                <tr>
                   {[
                     t('type'),
                     t('period'),
@@ -198,7 +198,7 @@ export default function RapoartePage() {
                   ].map((h) => (
                     <th
                       key={h}
-                      className="text-left text-xs font-medium text-gray-400 px-4 py-3 whitespace-nowrap"
+                      className="whitespace-nowrap"
                     >
                       {h}
                     </th>
@@ -208,7 +208,7 @@ export default function RapoartePage() {
               <tbody>
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="border-b border-white/5">
+                    <tr key={i}>
                       {Array.from({ length: 6 }).map((_, j) => (
                         <td key={j} className="px-4 py-3">
                           <Skeleton className="h-5 w-full" />
@@ -228,7 +228,7 @@ export default function RapoartePage() {
                     return (
                       <tr
                         key={r.id}
-                        className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                        className="transition-colors"
                       >
                         <td className="px-4 py-3">
                           <Badge variant={r.type === 'TRIP' ? 'default' : r.type === 'FOAIE_PARCURS' ? 'warning' : 'info'}>

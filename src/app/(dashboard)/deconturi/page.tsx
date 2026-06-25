@@ -126,9 +126,9 @@ export default function DeconturiPage() {
   return (
     <div className="flex flex-col h-full overflow-auto">
       <Header title={t('title')} />
-      <div className="flex-1 p-6 space-y-4">
+      <div className="app-content space-y-4">
         {/* Filters row */}
-        <div className="flex flex-wrap gap-3 items-end">
+        <div className="app-filter-bar">
           {/* Search */}
           <div className="relative">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -137,7 +137,7 @@ export default function DeconturiPage() {
               value={search}
               onChange={(e) => { setSearch(e.target.value); resetPage(); }}
               placeholder="Caută destinație..."
-              className="pl-9 pr-3 py-2 bg-[#1a1a1a] border border-white/10 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-52"
+              className="app-input w-full pl-9 sm:w-56"
             />
           </div>
 
@@ -149,8 +149,8 @@ export default function DeconturiPage() {
                 onClick={() => selectStatus(s)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   (isAccountant ? s === 'APPROVED' : statusFilter === s)
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white/10 text-gray-400 hover:bg-white/20 hover:text-white'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-950/30'
+                    : 'bg-white/[0.07] text-slate-400 hover:bg-white/[0.12] hover:text-white'
                 }`}
               >
                 {s === '' ? 'Toate' : STATUS_LABELS[s]}
@@ -163,7 +163,7 @@ export default function DeconturiPage() {
             <select
               value={userFilter}
               onChange={(e) => { setUserFilter(e.target.value); resetPage(); }}
-              className="px-3 py-2 bg-[#1a1a1a] border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="app-select w-full sm:w-auto"
             >
               <option value="">Toți angajații</option>
               {users.map((u) => (
@@ -182,40 +182,40 @@ export default function DeconturiPage() {
                 type="date"
                 value={fromFilter}
                 onChange={(e) => { setFromFilter(e.target.value); resetPage(); }}
-                className="px-2 py-2 bg-[#1a1a1a] border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-36"
+                className="app-input w-[9rem]"
               />
             </div>
-            <span className="text-gray-500 text-sm">—</span>
+            <span className="text-slate-500 text-sm">-</span>
             <input
               type="date"
               value={toFilter}
               onChange={(e) => { setToFilter(e.target.value); resetPage(); }}
-              className="px-2 py-2 bg-[#1a1a1a] border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 w-36"
+              className="app-input w-[9rem]"
             />
           </div>
         </div>
 
         {/* Table */}
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden">
+        <div className="app-panel overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="app-table">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">{t('destination')}</th>
+                <tr>
+                  <th>{t('destination')}</th>
                   {canFilterByUser && (
-                    <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">{t('employee')}</th>
+                    <th>{t('employee')}</th>
                   )}
-                  <th className="text-left text-xs font-medium text-gray-400 px-4 py-3">{t('period')}</th>
-                  <th className="text-right text-xs font-medium text-gray-400 px-4 py-3">{t('total')}</th>
-                  <th className="text-right text-xs font-medium text-gray-400 px-4 py-3">{t('budget')}</th>
-                  <th className="text-center text-xs font-medium text-gray-400 px-4 py-3">{t('status')}</th>
-                  <th className="px-4 py-3" />
+                  <th>{t('period')}</th>
+                  <th className="text-right">{t('total')}</th>
+                  <th className="text-right">{t('budget')}</th>
+                  <th className="text-center">{t('status')}</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   Array.from({ length: 8 }).map((_, i) => (
-                    <tr key={i} className="border-b border-white/5">
+                    <tr key={i}>
                       {Array.from({ length: canFilterByUser ? 7 : 6 }).map((_, j) => (
                         <td key={j} className="px-4 py-3">
                           <Skeleton className="h-5 w-full" />
@@ -241,10 +241,10 @@ export default function DeconturiPage() {
                     return (
                       <tr
                         key={trip.id}
-                        className={`border-b transition-colors ${
+                          className={`transition-colors ${
                           needsApproval
-                            ? 'border-blue-500/20 bg-blue-500/[0.06] hover:bg-blue-500/10'
-                            : 'border-white/5 hover:bg-white/5'
+                            ? 'bg-blue-500/[0.06] hover:bg-blue-500/10'
+                            : ''
                         }`}
                       >
                         <td className="px-4 py-3">
@@ -315,7 +315,7 @@ export default function DeconturiPage() {
 
           {/* Pagination */}
           {!isLoading && filtered.length > PAGE_SIZE && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-white/10">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-white/10">
               <span className="text-xs text-gray-500">
                 {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} din{' '}
                 {filtered.length} deconturi

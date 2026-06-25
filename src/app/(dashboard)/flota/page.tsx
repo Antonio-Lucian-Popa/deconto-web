@@ -47,10 +47,10 @@ export default function FlotaPage() {
   return (
     <div className="flex flex-col h-full overflow-auto">
       <Header title={t('title')} />
-      <div className="flex-1 p-6 space-y-6">
+      <div className="app-content space-y-6">
         {/* Summary bar */}
         {!isLoading && fleet && fleet.length > 0 && (
-          <div className="flex items-center gap-6">
+          <div className="app-panel-soft flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-6">
             <span className="text-gray-400 text-sm">
               <span className="text-white font-semibold">{fleet.length}</span> mașini în flotă
             </span>
@@ -101,7 +101,7 @@ export default function FlotaPage() {
               return (
                 <div
                   key={car.id}
-                  className={`bg-[#1a1a1a] border ${borderColor} rounded-xl p-5 space-y-4 transition-colors`}
+                  className={`app-card ${borderColor} p-5 space-y-4`}
                 >
                   {/* Header */}
                   <div className="flex items-start justify-between">
@@ -130,7 +130,7 @@ export default function FlotaPage() {
                   </div>
 
                   {/* GPS */}
-                  <div className="rounded-lg bg-white/5 border border-white/10 p-3 space-y-2">
+                  <div className="rounded-lg bg-white/[0.055] border border-white/10 p-3 space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2 min-w-0">
                         <MapPin size={14} className={car.latestLocation ? 'text-green-400' : 'text-gray-600'} />

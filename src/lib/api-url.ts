@@ -6,6 +6,7 @@ export function getApiBaseUrl() {
 export function getBasePath() {
   const rawPath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
   const path = rawPath.replace(/\/+$/, '');
+  if (!path) return '';
   return path.startsWith('/') ? path : `/${path}`;
 }
 

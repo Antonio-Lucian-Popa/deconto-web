@@ -45,7 +45,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
     >
       <div
         className={clsx(
-          'bg-[#1a1a1a] border border-white/10 rounded-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto',
+          'app-panel w-full max-h-[90vh] overflow-y-auto',
           sizeClasses[size]
         )}
         onClick={(e) => e.stopPropagation()}

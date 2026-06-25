@@ -3,19 +3,137 @@
 @tailwind utilities;
 
 :root {
-  --background: 15 15 15;
-  --foreground: 245 245 245;
+  --background: 246 247 249;
+  --foreground: 17 24 39;
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
+  background: rgb(var(--background));
 }
 
 body {
-  background-color: rgb(15 15 15);
-  color: rgb(245 245 245);
+  min-height: 100vh;
+  background: #f5f6f8;
+  color: rgb(var(--foreground));
+  text-rendering: optimizeLegibility;
 }
 
 * {
   box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.18);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.24);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.38);
+  background-clip: content-box;
+}
+
+@layer components {
+  .app-shell {
+    @apply min-h-screen bg-[#f5f6f8] text-slate-950;
+  }
+
+  .app-content {
+    @apply flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-8;
+  }
+
+  .app-panel {
+    @apply rounded-lg border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.06)];
+  }
+
+  .app-panel-soft {
+    @apply rounded-lg border border-slate-200/80 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.045)];
+  }
+
+  .app-card {
+    @apply rounded-lg border border-slate-200/80 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.045)] transition-colors;
+  }
+
+  .app-filter-bar {
+    @apply app-panel flex flex-col gap-3 p-3 sm:flex-row sm:flex-wrap sm:items-end;
+  }
+
+  .app-input {
+    @apply rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition focus:border-blue-400/70 focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .app-select {
+    @apply app-input appearance-none pr-8;
+  }
+
+  .app-table {
+    @apply w-full min-w-[760px] border-separate border-spacing-0;
+  }
+
+  .app-table thead tr {
+    @apply bg-slate-50;
+  }
+
+  .app-table th {
+    @apply border-b border-slate-200 px-4 py-3 text-left text-[11px] font-semibold uppercase text-slate-500;
+  }
+
+  .app-table td {
+    @apply border-b border-slate-100 px-4 py-3 align-middle;
+  }
+
+  .app-table tbody tr {
+    @apply transition-colors;
+  }
+
+  .app-table tbody tr:hover {
+    @apply bg-slate-50/80;
+  }
+
+  .app-icon-box {
+    @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50;
+  }
+}
+
+.app-panel .text-white,
+.app-panel-soft .text-white,
+.app-card .text-white {
+  color: rgb(15 23 42) !important;
+}
+
+.app-panel .text-gray-300,
+.app-panel .text-gray-400,
+.app-panel .text-slate-300,
+.app-panel .text-slate-400,
+.app-panel-soft .text-gray-300,
+.app-panel-soft .text-gray-400,
+.app-panel-soft .text-slate-300,
+.app-panel-soft .text-slate-400,
+.app-card .text-gray-300,
+.app-card .text-gray-400,
+.app-card .text-slate-300,
+.app-card .text-slate-400 {
+  color: rgb(100 116 139) !important;
+}
+
+.app-panel .border-white\/10,
+.app-panel-soft .border-white\/10,
+.app-card .border-white\/10 {
+  border-color: rgb(226 232 240) !important;
 }

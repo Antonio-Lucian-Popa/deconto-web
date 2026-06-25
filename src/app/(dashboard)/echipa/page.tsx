@@ -146,7 +146,7 @@ export default function EchipaPage() {
   return (
     <div className="flex flex-col h-full overflow-auto">
       <Header title={t('title')} />
-      <div className="flex-1 p-4 sm:p-6 space-y-6">
+      <div className="app-content space-y-6">
         {/* Action bar */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2 text-gray-400 text-sm">
@@ -165,13 +165,13 @@ export default function EchipaPage() {
         </div>
 
         {/* Users table */}
-        <div className="hidden md:block bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden">
+        <div className="hidden md:block app-panel overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="app-table">
               <thead>
-                <tr className="border-b border-white/10">
+                <tr>
                   {['Utilizator', t('role'), t('status'), 'Înregistrat', ...(isAdmin ? ['Acțiuni'] : [])].map((h) => (
-                    <th key={h} className="text-left text-xs font-medium text-gray-400 px-4 py-3">
+                    <th key={h}>
                       {h}
                     </th>
                   ))}
@@ -180,7 +180,7 @@ export default function EchipaPage() {
               <tbody>
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="border-b border-white/5">
+                    <tr key={i}>
                       {Array.from({ length: isAdmin ? 5 : 4 }).map((_, j) => (
                         <td key={j} className="px-4 py-3">
                           <Skeleton className="h-5 w-full" />
@@ -198,7 +198,7 @@ export default function EchipaPage() {
                   users?.map((u) => (
                     <tr
                       key={u.id}
-                      className={`border-b border-white/5 hover:bg-white/5 transition-colors ${
+                      className={`transition-colors ${
                         u.id === currentUser?.id ? 'bg-blue-600/5' : ''
                       }`}
                     >
@@ -265,21 +265,21 @@ export default function EchipaPage() {
         <div className="md:hidden space-y-3">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-[#1a1a1a] border border-white/10 rounded-xl p-4 space-y-3">
+              <div key={i} className="app-card p-4 space-y-3">
                 <Skeleton className="h-5 w-2/3" />
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-8 w-1/2" />
               </div>
             ))
           ) : users?.length === 0 ? (
-            <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-8 text-center text-gray-500 text-sm">
+            <div className="app-card p-8 text-center text-gray-500 text-sm">
               Nu există utilizatori
             </div>
           ) : (
             users?.map((u) => (
               <div
                 key={u.id}
-                className={`bg-[#1a1a1a] border border-white/10 rounded-xl p-4 space-y-4 ${
+                className={`app-card p-4 space-y-4 ${
                   u.id === currentUser?.id ? 'bg-blue-600/5 border-blue-500/20' : ''
                 }`}
               >
@@ -404,7 +404,7 @@ export default function EchipaPage() {
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as typeof inviteRole)}
-                className="w-full px-3 py-2 bg-[#262626] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                className="app-select w-full"
               >
                 <option value="EMPLOYEE">Angajat</option>
                 <option value="MANAGER">Manager</option>
@@ -459,7 +459,7 @@ export default function EchipaPage() {
                 value={editRole}
                 onChange={(e) => setEditRole(e.target.value as UserRole)}
                 disabled={editingUser.id === currentUser?.id}
-                className="w-full px-3 py-2 bg-[#262626] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="app-select w-full"
               >
                 <option value="ADMIN">Admin</option>
                 <option value="MANAGER">Manager</option>
@@ -467,7 +467,7 @@ export default function EchipaPage() {
                 <option value="EMPLOYEE">Angajat</option>
               </select>
             </div>
-            <label className="flex items-center justify-between gap-3 p-3 bg-[#262626] border border-white/10 rounded-lg">
+            <label className="flex items-center justify-between gap-3 p-3 bg-white/[0.055] border border-white/10 rounded-lg">
               <span>
                 <span className="block text-sm font-medium text-gray-200">Cont activ</span>
                 <span className="block text-xs text-gray-500">Utilizatorul poate intra în aplicație.</span>

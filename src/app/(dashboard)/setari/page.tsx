@@ -136,10 +136,10 @@ export default function SetariPage() {
   return (
     <div className="flex flex-col h-full overflow-auto">
       <Header title={t('title')} />
-      <div className="flex-1 p-6">
-        <div className="max-w-2xl space-y-6">
+      <div className="app-content">
+        <div className="max-w-3xl space-y-6">
           {/* Company info card */}
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-6 space-y-4">
+          <div className="app-panel p-5 sm:p-6 space-y-4">
             <h2 className="text-white font-semibold">Informații companie</h2>
             {isLoading ? (
               <div className="space-y-4">
@@ -174,7 +174,7 @@ export default function SetariPage() {
           </div>
 
           {/* Custom categories */}
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-6 space-y-4">
+          <div className="app-panel p-5 sm:p-6 space-y-4">
             <div>
               <h2 className="text-white font-semibold">Categorii personalizate cheltuieli</h2>
               <p className="text-gray-500 text-sm mt-1">
@@ -219,7 +219,7 @@ export default function SetariPage() {
                   onChange={(e) => setNewCategory(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addCategory()}
                   placeholder="Nouă categorie..."
-                  className="flex-1 px-3 py-2 bg-[#262626] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="app-input flex-1"
                 />
                 <Button variant="secondary" onClick={addCategory} disabled={!newCategory.trim()}>
                   <Plus size={16} /> Adaugă
@@ -230,7 +230,7 @@ export default function SetariPage() {
 
           {/* AI / OCR settings */}
           {!isReadOnly && (
-            <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-6 space-y-4">
+            <div className="app-panel p-5 sm:p-6 space-y-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
