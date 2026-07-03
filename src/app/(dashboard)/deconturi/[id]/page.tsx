@@ -66,12 +66,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   ALTELE: 'Altele',
 };
 const CATEGORY_COLORS: Record<string, string> = {
-  COMBUSTIBIL: 'text-amber-400',
-  MASA: 'text-emerald-400',
-  CAZARE: 'text-blue-400',
-  TRANSPORT: 'text-purple-400',
-  DIURNA: 'text-pink-400',
-  ALTELE: 'text-gray-400',
+  COMBUSTIBIL: 'text-amber-600',
+  MASA: 'text-emerald-600',
+  CAZARE: 'text-blue-600',
+  TRANSPORT: 'text-violet-600',
+  DIURNA: 'text-pink-600',
+  ALTELE: 'text-slate-600',
 };
 
 const canApprove: UserRole[] = ['ADMIN', 'MANAGER'];
@@ -171,7 +171,7 @@ export default function TripDetailPage({
     return (
       <div className="flex flex-col h-full overflow-auto">
         <Header title="Detaliu decont" />
-        <div className="p-6 space-y-4">
+        <div className="app-content space-y-4">
           <Skeleton className="h-10 w-64" />
           <div className="grid grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
@@ -199,18 +199,25 @@ export default function TripDetailPage({
   return (
     <div className="flex flex-col h-full overflow-auto">
       <Header title="Detaliu decont" />
-      <div className="flex-1 p-6 space-y-6">
+      <div className="app-content space-y-6">
         {/* Breadcrumb + title */}
         <div className="flex items-center gap-3">
-          <Link href="/deconturi" className="text-gray-400 hover:text-white transition-colors">
+          <Link href="/deconturi" className="text-slate-500 hover:text-slate-950 transition-colors">
             <ArrowLeft size={18} />
           </Link>
-          <h2 className="text-xl font-bold text-white">{trip.destination}</h2>
+          <h2 className="text-xl font-bold text-slate-950">{trip.destination}</h2>
           <Badge variant={STATUS_VARIANTS[trip.status] ?? 'gray'}>
             {STATUS_LABELS[trip.status] ?? trip.status}
           </Badge>
           {overBudget && <Badge variant="danger">Buget depășit</Badge>}
         </div>
+
+        {trip.rejectionReason && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-red-600">Motivul respingerii</p>
+            <p className="mt-1 text-sm text-red-800">{trip.rejectionReason}</p>
+          </div>
+        )}
 
         {/* Info cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -260,17 +267,17 @@ export default function TripDetailPage({
           ].map((item) => (
             <div
               key={item.label}
-              className="bg-[#1a1a1a] border border-white/10 rounded-xl p-4"
+              className="app-card p-4"
             >
               <p className="text-xs text-gray-400 mb-1">{item.label}</p>
-              <p className="text-white font-medium text-sm">{item.value}</p>
+              <p className="text-slate-950 font-medium text-sm">{item.value}</p>
             </div>
           ))}
         </div>
 
         {/* Totals by category */}
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-5">
-          <h3 className="text-white font-semibold mb-4">Totaluri pe categorii</h3>
+        <div className="app-panel p-5">
+          <h3 className="text-slate-950 font-semibold mb-4">Totaluri pe categorii</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {Object.entries(CATEGORY_LABELS).map(([cat, label]) => {
               const total = byCategory[cat] ?? 0;
@@ -278,36 +285,33 @@ export default function TripDetailPage({
               return (
                 <div
                   key={cat}
-                  className="flex flex-col gap-1 p-3 bg-white/5 rounded-lg"
+                  className="flex flex-col gap-1 p-3 bg-slate-50 rounded-lg border border-slate-100"
                 >
                   <span className={`text-xs font-medium ${CATEGORY_COLORS[cat]}`}>{label}</span>
-                  <span className="text-white font-bold text-sm">{formatRON(total)}</span>
+                  <span className="text-slate-950 font-bold text-sm">{formatRON(total)}</span>
                 </div>
               );
             })}
-            <div className="flex flex-col gap-1 p-3 bg-blue-600/20 border border-blue-600/30 rounded-lg">
-              <span className="text-xs font-medium text-blue-400">Total</span>
-              <span className="text-white font-bold text-sm">{formatRON(totalExpenses)}</span>
+            <div className="flex flex-col gap-1 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+              <span className="text-xs font-medium text-blue-700">Total</span>
+              <span className="text-slate-950 font-bold text-sm">{formatRON(totalExpenses)}</span>
             </div>
           </div>
         </div>
 
         {/* Expenses table with receipt thumbnails */}
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
-            <h3 className="text-white font-semibold">
+        <div className="app-panel overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+            <h3 className="text-slate-950 font-semibold">
               Cheltuieli ({trip.expenses.length})
             </h3>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="app-table">
               <thead>
-                <tr className="border-b border-white/10">
+                <tr>
                   {['Data', 'Categorie', 'Comerciant', 'Detalii', 'Note', 'Sumă', 'Bon'].map((h) => (
-                    <th
-                      key={h}
-                      className="text-left text-xs font-medium text-gray-400 px-4 py-3"
-                    >
+                    <th key={h}>
                       {h}
                     </th>
                   ))}
@@ -324,7 +328,7 @@ export default function TripDetailPage({
                   trip.expenses.map((expense) => (
                     <tr
                       key={expense.id}
-                      className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                      className="transition-colors"
                     >
                       <td className="px-4 py-3 text-gray-300 text-sm whitespace-nowrap">
                         {formatDate(expense.date)}
@@ -339,7 +343,7 @@ export default function TripDetailPage({
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <p className="text-white text-sm">{expense.merchant ?? '—'}</p>
+                        <p className="text-slate-950 text-sm">{expense.merchant ?? '—'}</p>
                         {expense.merchantCif && (
                           <p className="text-gray-500 text-xs">CIF: {expense.merchantCif}</p>
                         )}
@@ -351,7 +355,7 @@ export default function TripDetailPage({
                         <p className="truncate">{expense.notes ?? '—'}</p>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className="text-white text-sm font-medium">
+                        <span className="text-slate-950 text-sm font-medium">
                           {formatRON(expense.amount)}
                         </span>
                         {expense.currency !== 'RON' && (
@@ -369,7 +373,7 @@ export default function TripDetailPage({
                             <img
                               src={expense.imageUrl}
                               alt="Bon"
-                              className="w-12 h-12 object-cover rounded-lg border border-white/10 group-hover:border-blue-500 transition-colors"
+                              className="w-12 h-12 object-cover rounded-lg border border-slate-200 group-hover:border-blue-500 transition-colors"
                             />
                             <div className="absolute inset-0 rounded-lg bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                               <ImageIcon size={14} className="text-white" />
@@ -485,7 +489,7 @@ export default function TripDetailPage({
             onChange={(e) => setRejectReason(e.target.value)}
             placeholder="Ex: Lipsesc bonurile pentru cazare..."
             rows={4}
-            className="w-full px-3 py-2 bg-[#262626] border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="app-input w-full resize-none"
           />
           <div className="flex justify-end gap-3">
             <Button variant="secondary" onClick={() => setRejectModal(false)}>

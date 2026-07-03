@@ -33,6 +33,7 @@ export interface Trip {
   kmExtraUrban: number | null;
   fuelAtDeparture: number | null;
   fuelAtArrival: number | null;
+  rejectionReason: string | null;
   status: TripStatus;
   createdAt: string;
   updatedAt: string;
@@ -61,6 +62,7 @@ export interface Expense {
   notes: string | null;
   fuelLiters: number | null;
   fuelPricePerLiter: number | null;
+  mileage: number | null;
   accommodationCheckIn: string | null;
   accommodationCheckOut: string | null;
   accommodationNights: number | null;

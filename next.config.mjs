@@ -8,9 +8,6 @@ const nextConfig = {
   output: 'standalone',
   basePath,
   assetPrefix: basePath || undefined,
-  images: {
-    remotePatterns: [{ protocol: 'http', hostname: '**' }, { protocol: 'https', hostname: '**' }],
-  },
 };
 
 export default withNextIntl(nextConfig);

@@ -51,11 +51,11 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-            <h3 className="text-white font-semibold">{title}</h3>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+            <h3 className="text-slate-950 font-semibold">{title}</h3>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-slate-400 hover:text-slate-950 transition-colors"
             >
               <X size={18} />
             </button>

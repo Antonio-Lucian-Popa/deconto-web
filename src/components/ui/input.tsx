@@ -17,7 +17,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           className={clsx(
             'app-input w-full',
-            error ? 'border-red-500' : 'border-white/10',
+            error ? 'border-red-500' : '',
             className
           )}
           {...props}

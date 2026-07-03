@@ -8,10 +8,10 @@ function withoutBasePath(pathname: string) {
   return pathname.startsWith(`${basePath}/`) ? pathname.slice(basePath.length) : pathname;
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const pathname = withoutBasePath(req.nextUrl.pathname);
 
-  if (publicPaths.some((p) => pathname.startsWith(p))) {
+  if (publicPaths.some((path) => pathname.startsWith(path))) {
     return NextResponse.next();
   }
 
@@ -27,5 +27,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next|favicon.ico|.*\..*).*)'],
+  matcher: ['/((?!_next|favicon.ico|.*\\..*).*)'],
 };

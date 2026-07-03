@@ -137,3 +137,64 @@ body {
 .app-card .border-white\/10 {
   border-color: rgb(226 232 240) !important;
 }
+
+main .bg-\[\#1a1a1a\] {
+  background-color: rgb(255 255 255) !important;
+  border-color: rgb(226 232 240) !important;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.045);
+  border-radius: 0.5rem;
+}
+
+main .bg-\[\#262626\] {
+  background-color: rgb(255 255 255) !important;
+  border-color: rgb(226 232 240) !important;
+}
+
+main .bg-white\/5,
+main .bg-white\/\[0\.055\],
+main .bg-white\/\[0\.06\],
+main .bg-white\/\[0\.07\] {
+  background-color: rgb(248 250 252) !important;
+}
+
+main .border-white\/10,
+main .border-white\/\[0\.06\] {
+  border-color: rgb(226 232 240) !important;
+}
+
+main .divide-white\/5 > :not([hidden]) ~ :not([hidden]),
+main .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgb(241 245 249) !important;
+}
+
+main .bg-\[\#1a1a1a\] .text-white,
+main .bg-\[\#262626\] .text-white,
+main .bg-white\/5 .text-white,
+main .bg-white\/\[0\.055\] .text-white,
+main .bg-white\/\[0\.06\] .text-white,
+main .bg-white\/\[0\.07\] .text-white {
+  color: rgb(15 23 42) !important;
+}
+
+main .text-gray-300 {
+  color: rgb(71 85 105) !important;
+}
+
+main .text-gray-400 {
+  color: rgb(100 116 139) !important;
+}
+
+main .text-gray-500 {
+  color: rgb(100 116 139) !important;
+}
+
+main .hover\:text-white:hover {
+  color: rgb(15 23 42) !important;
+}
+
+main .hover\:bg-white\/5:hover,
+main .hover\:bg-white\/10:hover,
+main .hover\:bg-white\/\[0\.045\]:hover,
+main .hover\:bg-white\/\[0\.12\]:hover {
+  background-color: rgb(248 250 252) !important;
+}

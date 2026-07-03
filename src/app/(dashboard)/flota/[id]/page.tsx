@@ -148,7 +148,7 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
     return (
       <div className="flex flex-col h-full overflow-auto">
         <Header title="Detaliu mașină" />
-        <div className="p-6 space-y-4">
+        <div className="app-content space-y-4">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-64 w-full" />
@@ -168,13 +168,13 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
   return (
     <div className="flex flex-col h-full overflow-auto">
       <Header title="Detaliu mașină" />
-      <div className="flex-1 p-6 space-y-6">
+      <div className="app-content space-y-6">
         {/* Breadcrumb */}
         <div className="flex items-center gap-3">
-          <Link href="/flota" className="text-gray-400 hover:text-white transition-colors">
+          <Link href="/flota" className="text-slate-500 hover:text-slate-950 transition-colors">
             <ArrowLeft size={18} />
           </Link>
-          <h2 className="text-xl font-bold text-white">{car.plateNumber}</h2>
+          <h2 className="text-xl font-bold text-slate-950">{car.plateNumber}</h2>
           <span className="text-gray-400 text-sm">{car.make} {car.model}</span>
         </div>
 
@@ -186,20 +186,20 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
             { label: 'Kilometraj', value: car.mileage ? `${car.mileage.toLocaleString('ro-RO')} km` : '—' },
             { label: 'Culoare', value: car.color ?? '—' },
           ].map((item) => (
-            <div key={item.label} className="bg-[#1a1a1a] border border-white/10 rounded-xl p-4">
+            <div key={item.label} className="app-card p-4">
               <p className="text-xs text-gray-400 mb-1">{item.label}</p>
-              <p className="text-white font-medium">{String(item.value)}</p>
+              <p className="text-slate-950 font-medium">{String(item.value)}</p>
             </div>
           ))}
         </div>
 
         {/* GPS */}
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-xl p-5">
+        <div className="app-panel p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <MapPin size={16} className={car.latestLocation ? 'text-green-400' : 'text-gray-600'} />
-                <h3 className="text-white font-semibold">Poziție GPS</h3>
+                <h3 className="text-slate-950 font-semibold">Poziție GPS</h3>
               </div>
               {car.latestLocation ? (
                 <div className="space-y-1">
@@ -222,7 +222,7 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
                 href={`https://www.google.com/maps/search/?api=1&query=${car.latestLocation.latitude},${car.latestLocation.longitude}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-blue-400 hover:text-blue-300 hover:bg-white/10 transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700 hover:bg-blue-100 transition-colors"
               >
                 Deschide harta <ExternalLink size={14} />
               </a>
@@ -231,27 +231,27 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-white/10 flex gap-1">
+        <div className="border-b border-slate-200 flex gap-1 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
-                  ? 'border-blue-500 text-blue-400'
-                  : 'border-transparent text-gray-400 hover:text-white'
+                  ? 'border-blue-600 text-blue-700'
+                  : 'border-transparent text-slate-500 hover:text-slate-950'
               }`}
             >
               {tab.icon}
               {tab.label}
               {tab.key === 'documents' && documents && (
-                <span className="text-xs bg-white/10 px-1.5 py-0.5 rounded-full">{documents.length}</span>
+                <span className="text-xs bg-slate-100 px-1.5 py-0.5 rounded-full">{documents.length}</span>
               )}
               {tab.key === 'reminders' && reminders && (
-                <span className="text-xs bg-white/10 px-1.5 py-0.5 rounded-full">{reminders.length}</span>
+                <span className="text-xs bg-slate-100 px-1.5 py-0.5 rounded-full">{reminders.length}</span>
               )}
               {tab.key === 'costs' && costs && (
-                <span className="text-xs bg-white/10 px-1.5 py-0.5 rounded-full">{costs.length}</span>
+                <span className="text-xs bg-slate-100 px-1.5 py-0.5 rounded-full">{costs.length}</span>
               )}
             </button>
           ))}
@@ -293,10 +293,10 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
                   return (
                     <div
                       key={doc.id}
-                      className="relative group bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden"
+                      className="relative group app-card overflow-hidden"
                     >
                       {isPdf ? (
-                        <div className="h-36 flex items-center justify-center bg-white/5">
+                        <div className="h-36 flex items-center justify-center bg-slate-50">
                           <FileText size={40} className="text-gray-400" />
                         </div>
                       ) : (
@@ -316,7 +316,7 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
                         </button>
                       )}
                       <div className="p-3">
-                        <p className="text-white text-sm font-medium truncate">{doc.title}</p>
+                        <p className="text-slate-950 text-sm font-medium truncate">{doc.title}</p>
                         <p className="text-gray-500 text-xs">{formatDate(doc.createdAt)}</p>
                       </div>
                       <button
@@ -352,14 +352,14 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
                 return (
                   <div
                     key={r.id}
-                    className="flex items-center justify-between p-4 bg-[#1a1a1a] border border-white/10 rounded-xl"
+                    className="flex items-center justify-between p-4 app-card"
                   >
                     <div className="flex items-center gap-4">
                       <Badge variant={REMINDER_STATUS_VARIANTS[r.status]}>
                         {REMINDER_STATUS_LABELS[r.status]}
                       </Badge>
                       <div>
-                        <p className="text-white font-medium">{r.title}</p>
+                        <p className="text-slate-950 font-medium">{r.title}</p>
                         <p className="text-gray-400 text-sm">
                           Expiră: {formatDate(r.expiresAt)}
                           {daysLeft > 0
@@ -393,30 +393,30 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
           <div className="space-y-4">
             {/* Summary */}
             {!costsLoading && costs && costs.length > 0 && (
-              <div className="flex items-center gap-6 px-4 py-3 bg-[#1a1a1a] border border-white/10 rounded-lg text-sm">
+              <div className="flex items-center gap-6 px-4 py-3 app-panel text-sm">
                 <span className="text-gray-400">
-                  <span className="text-white font-semibold">{costs.length}</span> intrări
+                  <span className="text-slate-950 font-semibold">{costs.length}</span> intrări
                 </span>
                 <span className="text-gray-400">
-                  Total: <span className="text-white font-semibold">{formatRON(totalCosts)}</span>
+                  Total: <span className="text-slate-950 font-semibold">{formatRON(totalCosts)}</span>
                 </span>
               </div>
             )}
 
-            <div className="bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden">
+            <div className="app-panel overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="app-table">
                   <thead>
-                    <tr className="border-b border-white/10">
+                    <tr>
                       {['Data', 'Categorie', 'Furnizor', 'Note', 'Sumă'].map((h) => (
-                        <th key={h} className="text-left text-xs font-medium text-gray-400 px-4 py-3">{h}</th>
+                        <th key={h}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {costsLoading ? (
                       Array.from({ length: 5 }).map((_, i) => (
-                        <tr key={i} className="border-b border-white/5">
+                        <tr key={i}>
                           {[1, 2, 3, 4, 5].map((j) => (
                             <td key={j} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td>
                           ))}
@@ -430,7 +430,7 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
                       </tr>
                     ) : (
                       costs?.map((cost) => (
-                        <tr key={cost.id} className="border-b border-white/5 hover:bg-white/5">
+                        <tr key={cost.id}>
                           <td className="px-4 py-3 text-gray-300 text-sm whitespace-nowrap">{formatDate(cost.date)}</td>
                           <td className="px-4 py-3">
                             <Badge variant="gray">{COST_CATEGORY_LABELS[cost.category] ?? cost.category}</Badge>
@@ -440,7 +440,7 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
                             <p className="truncate">{cost.notes ?? '—'}</p>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <span className="text-white font-medium text-sm">{formatRON(cost.amount, cost.currency)}</span>
+                            <span className="text-slate-950 font-medium text-sm">{formatRON(cost.amount, cost.currency)}</span>
                           </td>
                         </tr>
                       ))
@@ -462,7 +462,7 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
       >
         <div className="space-y-4">
           <p className="text-gray-400 text-sm">
-            Selectează noua dată de expirare pentru documentul <span className="text-white">{renewModal?.title}</span>.
+            Selectează noua dată de expirare pentru documentul <span className="font-medium text-slate-950">{renewModal?.title}</span>.
           </p>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1.5">Nouă dată expirare</label>
@@ -471,7 +471,7 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
               value={renewDate}
               onChange={(e) => setRenewDate(e.target.value)}
               min={new Date().toISOString().slice(0, 10)}
-              className="w-full px-3 py-2 bg-[#262626] border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="app-input w-full"
             />
           </div>
           <div className="flex justify-end gap-3">
