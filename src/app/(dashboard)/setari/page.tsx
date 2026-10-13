@@ -195,7 +195,7 @@ export default function SetariPage() {
               {customCategories.map((cat) => (
                 <span
                   key={cat}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-blue-600/20 text-blue-400 border border-blue-600/30"
+                  className="flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700"
                 >
                   {cat}
                   {!isReadOnly && (
@@ -234,7 +234,7 @@ export default function SetariPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <KeyRound size={18} className="text-blue-400" />
+                    <KeyRound size={18} className="text-blue-600" />
                     <h2 className="text-white font-semibold">AI / OCR bonuri</h2>
                   </div>
                   <p className="text-gray-500 text-sm mt-1">

@@ -104,20 +104,20 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
   );
 
   return (
-    <aside className={clsx('w-64 min-h-screen bg-[#242424] text-white flex flex-col flex-shrink-0', className)}>
+    <aside className={clsx('min-h-screen w-[272px] flex-shrink-0 flex-col border-r border-slate-800/80 bg-gradient-to-b from-[#111c3b] via-[#142249] to-[#101a36] text-white shadow-[12px_0_40px_rgba(15,23,42,0.08)]', className)}>
       {/* Logo */}
-      <div className="p-5">
+      <div className="p-5 pb-3">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
-            <span className="text-sm font-black text-white">D</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-950/30">
+            <span className="text-base font-black text-white">D</span>
           </div>
           <div className="min-w-0">
-            <span className="text-base font-bold text-white tracking-tight">Deconto</span>
-            <p className="text-[11px] text-zinc-500 -mt-0.5">Expense ops</p>
+            <span className="text-base font-bold tracking-tight text-white">Deconto</span>
+            <p className="-mt-0.5 text-[11px] text-blue-200/55">Expense operations</p>
           </div>
         </div>
         {user && (
-          <p className="text-[11px] text-zinc-500 mt-6 mb-2">Main menu</p>
+          <p className="mb-2 mt-7 text-[10px] font-bold uppercase tracking-[0.14em] text-blue-200/40">Meniu principal</p>
         )}
         {user && (
           <p className="sr-only">
@@ -136,18 +136,19 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={false}
               onClick={onNavigate}
               className={clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all border border-transparent',
+                'group flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all duration-200',
                 isActive
-                  ? 'bg-zinc-700 text-white'
-                  : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                  ? 'border-blue-400/20 bg-blue-500/20 text-white shadow-inner shadow-blue-400/5'
+                  : 'border-transparent text-blue-100/65 hover:bg-white/[0.07] hover:text-white'
               )}
             >
               {item.icon}
               <span className="flex-1">{item.label}</span>
               {item.badge != null && (
-                <span className="bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                <span className="min-w-[22px] rounded-full bg-blue-500 px-1.5 py-0.5 text-center text-xs text-white shadow-sm">
                   {item.badge}
                 </span>
               )}
@@ -164,27 +165,28 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
         {user?.role === 'ADMIN' && (
           <Link
             href="/billing"
+            prefetch={false}
             onClick={onNavigate}
-            className="block rounded-lg bg-zinc-700/70 p-4 text-center hover:bg-zinc-700 transition-colors"
+            className="block rounded-2xl border border-blue-300/10 bg-white/[0.07] p-4 text-center transition-all hover:border-blue-300/20 hover:bg-white/[0.1]"
           >
-            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-white">
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/20 text-blue-200">
               <CreditCard size={18} />
             </div>
             <p className="text-sm font-semibold text-white">Abonament</p>
-            <p className="mt-1 text-[11px] leading-4 text-zinc-400">
+            <p className="mt-1 text-[11px] leading-4 text-blue-100/50">
               Gestionează planul și plata companiei.
             </p>
           </Link>
         )}
         {user && (
-          <div className="px-3 py-2 rounded-lg bg-zinc-800">
-            <p className="text-xs text-zinc-300 truncate">{user.email}</p>
-            <p className="text-[11px] text-zinc-500 capitalize">{user.role.toLowerCase()}</p>
+          <div className="rounded-xl border border-white/5 bg-black/10 px-3 py-2.5">
+            <p className="truncate text-xs font-medium text-blue-50">{user.email}</p>
+            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-200/45">{user.role.toLowerCase()}</p>
           </div>
         )}
         <button
           onClick={logout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-blue-100/60 transition-colors hover:bg-red-500/10 hover:text-red-200"
         >
           <LogOut size={18} />
           {tAuth('logout')}

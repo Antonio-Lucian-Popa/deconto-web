@@ -40,22 +40,22 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
         className={clsx(
-          'app-panel w-full max-h-[90vh] overflow-y-auto',
+          'app-panel w-full max-h-[90vh] overflow-y-auto shadow-[0_30px_80px_rgba(15,23,42,0.24)]',
           sizeClasses[size]
         )}
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-            <h3 className="text-slate-950 font-semibold">{title}</h3>
+            <h3 className="font-bold tracking-tight text-slate-950">{title}</h3>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-950 transition-colors"
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-950"
             >
               <X size={18} />
             </button>

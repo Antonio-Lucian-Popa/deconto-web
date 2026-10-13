@@ -213,7 +213,7 @@ export default function EchipaPage() {
                             <p className="text-white text-sm font-medium">
                               {userDisplayName(u)}
                               {u.id === currentUser?.id && (
-                                <span className="ml-2 text-xs text-blue-400">(tu)</span>
+                                <span className="ml-2 text-xs font-semibold text-blue-600">(tu)</span>
                               )}
                             </p>
                             <p className="text-gray-400 text-xs">{u.email}</p>
@@ -293,7 +293,7 @@ export default function EchipaPage() {
                     <p className="text-white text-sm font-medium truncate">
                       {userDisplayName(u)}
                       {u.id === currentUser?.id && (
-                        <span className="ml-2 text-xs text-blue-400">(tu)</span>
+                        <span className="ml-2 text-xs font-semibold text-blue-600">(tu)</span>
                       )}
                     </p>
                     <p className="text-gray-400 text-xs truncate">{u.email}</p>
@@ -436,7 +436,7 @@ export default function EchipaPage() {
             <div className="p-3 bg-white/5 border border-white/10 rounded-lg">
               <p className="text-white text-sm font-medium truncate">{editingUser.email}</p>
               {editingUser.id === currentUser?.id && (
-                <p className="text-blue-400 text-xs mt-1">Acesta este contul tău.</p>
+                <p className="mt-1 text-xs font-medium text-blue-600">Acesta este contul tău.</p>
               )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

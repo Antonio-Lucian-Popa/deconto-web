@@ -509,7 +509,7 @@ export default function DashboardPage() {
             </h2>
             <Link
               href={`/deconturi?status=${recentTripStatus}`}
-              className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1"
+              className="flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700"
             >
               Vezi toate <ChevronRight size={14} />
             </Link>
@@ -535,6 +535,7 @@ export default function DashboardPage() {
                 <Link
                   key={trip.id}
                   href={`/deconturi/${trip.id}`}
+                  prefetch={false}
                   className="flex items-center justify-between gap-4 px-5 py-3.5 hover:bg-slate-50 transition-colors group"
                 >
                   <div className="flex items-center gap-3">

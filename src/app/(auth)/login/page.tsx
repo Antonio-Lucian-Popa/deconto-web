@@ -118,7 +118,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium rounded-lg transition-colors mt-2 inline-flex items-center justify-center gap-2 shadow-lg shadow-blue-950/35"
+              className="mt-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-blue-600 bg-blue-600 px-4 py-2.5 font-semibold text-white shadow-[0_7px_20px_rgba(37,99,235,0.28)] transition-all hover:border-blue-700 hover:bg-blue-700 hover:shadow-[0_9px_24px_rgba(37,99,235,0.34)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px disabled:opacity-50 disabled:shadow-none"
             >
               {loading ? t('loggingIn') : t('loginButton')}
               {!loading && <ArrowRight size={16} />}

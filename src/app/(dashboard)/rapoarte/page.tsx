@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { apiFetch, apiDownload } from '@/lib/api-client';
-import type { Report, ReportType, Car } from '@/lib/api-types';
+import type { Report, ReportListResponse, ReportType, Car } from '@/lib/api-types';
 import { Header } from '@/components/layout/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
 import { useAuth } from '@/hooks/use-auth';
 import { useUsers, userDisplayName } from '@/hooks/use-users';
-import { Download, Send, Plus, FileText, ChevronDown, Trash2, Route, Users } from 'lucide-react';
+import { Download, Send, Plus, FileText, ChevronDown, Trash2, Route, Users, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useMemo } from 'react';
 
@@ -20,6 +20,7 @@ const REPORT_TYPE_LABELS: Record<ReportType, string> = {
   MONTHLY: 'Lunar',
   FOAIE_PARCURS: 'Foaie Parcurs',
   FOAIE_PARCURS_LUNAR: 'Foaie Parcurs Lunară',
+  BON_CONSUM_COMBUSTIBIL: 'Bon consum combustibil',
 };
 
 const REPORT_TYPE_VARIANTS: Record<ReportType, 'default' | 'warning' | 'info' | 'success'> = {
@@ -27,7 +28,10 @@ const REPORT_TYPE_VARIANTS: Record<ReportType, 'default' | 'warning' | 'info' | 
   MONTHLY: 'info',
   FOAIE_PARCURS: 'warning',
   FOAIE_PARCURS_LUNAR: 'success',
+  BON_CONSUM_COMBUSTIBIL: 'info',
 };
+
+const REPORTS_PER_PAGE = 20;
 
 function formatDateTime(dateStr: string) {
   return new Intl.DateTimeFormat('ro-RO', {
@@ -66,11 +70,14 @@ export default function RapoartePage() {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
-  const { data: reports, isLoading } = useQuery({
-    queryKey: ['reports'],
-    queryFn: () => apiFetch<Report[]>('/api/reports'),
+  const { data: reportPage, isLoading, isError, refetch } = useQuery({
+    queryKey: ['reports', page],
+    queryFn: () => apiFetch<ReportListResponse>(`/api/reports?page=${page}&limit=${REPORTS_PER_PAGE}`),
   });
+  const reports = reportPage?.items ?? [];
+  const totalPages = Math.max(1, Math.ceil((reportPage?.total ?? 0) / REPORTS_PER_PAGE));
 
   const { data: users } = useUsers();
 
@@ -451,6 +458,18 @@ export default function RapoartePage() {
           </div>
         </Modal>
 
+        {isError && (
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-red-800">
+            <div className="flex min-w-0 items-center gap-3">
+              <AlertCircle className="shrink-0" size={19} />
+              <p className="text-sm font-medium">Lista rapoartelor nu a putut fi încărcată.</p>
+            </div>
+            <Button variant="secondary" size="sm" onClick={() => void refetch()}>
+              Reîncearcă
+            </Button>
+          </div>
+        )}
+
         {/* Reports table */}
         <div className="app-panel overflow-hidden">
           <div className="overflow-x-auto">
@@ -485,14 +504,14 @@ export default function RapoartePage() {
                       ))}
                     </tr>
                   ))
-                ) : reports?.length === 0 ? (
+                ) : reports.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center text-gray-500 py-16 text-sm">
                       Nu există rapoarte generate
                     </td>
                   </tr>
                 ) : (
-                  reports?.map((r) => {
+                  reports.map((r) => {
                     const generator = usersMap.get(r.userId);
                     return (
                       <tr
@@ -536,7 +555,7 @@ export default function RapoartePage() {
                             <button
                               onClick={() => handleDownload(r.id)}
                               disabled={downloadingId === r.id}
-                              className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-xs disabled:opacity-40"
+                              className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700 disabled:opacity-40"
                               title="Descarcă PDF"
                             >
                               <Download size={15} />
@@ -546,7 +565,7 @@ export default function RapoartePage() {
                               <button
                                 onClick={() => handleSend(r.id)}
                                 disabled={sendingId === r.id}
-                                className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-xs disabled:opacity-40"
+                                className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 disabled:opacity-40"
                                 title="Trimite la contabilitate"
                               >
                                 <Send size={15} />
@@ -556,7 +575,7 @@ export default function RapoartePage() {
                             <button
                               onClick={() => handleDelete(r.id)}
                               disabled={deletingId === r.id}
-                              className="flex items-center gap-1.5 text-gray-400 hover:text-red-400 transition-colors text-xs disabled:opacity-40"
+                              className="flex items-center gap-1.5 rounded-lg p-1.5 text-xs font-semibold text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
                               title="Șterge raport"
                             >
                               <Trash2 size={15} />
@@ -570,6 +589,31 @@ export default function RapoartePage() {
               </tbody>
             </table>
           </div>
+          {!isLoading && reportPage && reportPage.total > REPORTS_PER_PAGE && (
+            <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-slate-500">
+                {reportPage.total} rapoarte · pagina {page} din {totalPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={page === 1}
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                >
+                  <ChevronLeft size={15} /> Anterior
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                >
+                  Următor <ChevronRight size={15} />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

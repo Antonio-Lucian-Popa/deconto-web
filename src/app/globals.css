@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: 246 247 249;
-  --foreground: 17 24 39;
+  --background: 247 248 252;
+  --foreground: 15 23 42;
 }
 
 html {
@@ -14,7 +14,7 @@ html {
 
 body {
   min-height: 100vh;
-  background: #f5f6f8;
+  background: #f7f8fc;
   color: rgb(var(--foreground));
   text-rendering: optimizeLegibility;
 }
@@ -51,31 +51,31 @@ body {
 
 @layer components {
   .app-shell {
-    @apply min-h-screen bg-[#f5f6f8] text-slate-950;
+    @apply min-h-screen bg-[#f7f8fc] text-slate-950;
   }
 
   .app-content {
-    @apply flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-8;
+    @apply mx-auto w-full max-w-[1600px] flex-1 px-4 py-5 sm:px-6 sm:py-7 lg:px-8;
   }
 
   .app-panel {
-    @apply rounded-lg border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.06)];
+    @apply rounded-2xl border border-slate-200/70 bg-white shadow-[0_10px_30px_rgba(30,41,59,0.055)];
   }
 
   .app-panel-soft {
-    @apply rounded-lg border border-slate-200/80 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.045)];
+    @apply rounded-2xl border border-slate-200/70 bg-white shadow-[0_8px_24px_rgba(30,41,59,0.045)];
   }
 
   .app-card {
-    @apply rounded-lg border border-slate-200/80 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.045)] transition-colors;
+    @apply rounded-2xl border border-slate-200/70 bg-white shadow-[0_8px_24px_rgba(30,41,59,0.045)] transition-all duration-200;
   }
 
   .app-filter-bar {
-    @apply app-panel flex flex-col gap-3 p-3 sm:flex-row sm:flex-wrap sm:items-end;
+    @apply app-panel flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-end;
   }
 
   .app-input {
-    @apply rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 placeholder:text-slate-400 outline-none transition focus:border-blue-400/70 focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-60;
+    @apply min-h-10 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-950 shadow-sm placeholder:text-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60;
   }
 
   .app-select {
@@ -87,15 +87,15 @@ body {
   }
 
   .app-table thead tr {
-    @apply bg-slate-50;
+    @apply bg-slate-50/80;
   }
 
   .app-table th {
-    @apply border-b border-slate-200 px-4 py-3 text-left text-[11px] font-semibold uppercase text-slate-500;
+    @apply border-b border-slate-200 px-4 py-3.5 text-left text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500;
   }
 
   .app-table td {
-    @apply border-b border-slate-100 px-4 py-3 align-middle;
+    @apply border-b border-slate-100 px-4 py-3.5 align-middle;
   }
 
   .app-table tbody tr {
@@ -103,12 +103,17 @@ body {
   }
 
   .app-table tbody tr:hover {
-    @apply bg-slate-50/80;
+    @apply bg-blue-50/35;
   }
 
   .app-icon-box {
-    @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50;
+    @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-600;
   }
+}
+
+.app-card:hover {
+  border-color: rgb(191 219 254 / 0.9);
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.075);
 }
 
 .app-panel .text-white,
@@ -142,7 +147,7 @@ main .bg-\[\#1a1a1a\] {
   background-color: rgb(255 255 255) !important;
   border-color: rgb(226 232 240) !important;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.045);
-  border-radius: 0.5rem;
+  border-radius: 1rem;
 }
 
 main .bg-\[\#262626\] {

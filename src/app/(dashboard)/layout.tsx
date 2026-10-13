@@ -24,7 +24,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (isLoading) {
     return (
       <div className="app-shell flex h-screen">
-        <div className="w-64 bg-[#242424] p-4 space-y-3">
+        <div className="w-[272px] space-y-3 bg-[#111c3b] p-4">
           {Array.from({ length: 7 }).map((_, i) => (
             <Skeleton key={i} className="h-10 w-full" />
           ))}
@@ -42,10 +42,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="app-shell flex h-screen overflow-hidden">
       <Sidebar className="hidden md:flex" />
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 h-16 border-b border-slate-200 bg-white flex items-center justify-between px-4">
+      <div className="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 shadow-sm backdrop-blur-xl md:hidden">
         <button
           onClick={() => setMobileMenuOpen(true)}
-          className="w-10 h-10 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
           aria-label="Deschide meniul"
         >
           <Menu size={20} />
@@ -58,8 +58,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
 
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}>
-          <div className="relative w-72 max-w-[85vw] h-full" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-sm md:hidden" onClick={() => setMobileMenuOpen(false)}>
+          <div className="relative h-full w-[272px] max-w-[86vw] shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <Sidebar className="flex" onNavigate={() => setMobileMenuOpen(false)} />
             <button
               onClick={() => setMobileMenuOpen(false)}

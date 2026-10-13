@@ -112,7 +112,7 @@ export default function FlotaPage() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-blue-400 font-medium text-sm">{formatRON(car.totalCosts12m)}</p>
+                      <p className="text-sm font-semibold text-blue-600">{formatRON(car.totalCosts12m)}</p>
                       <p className="text-gray-600 text-xs">costuri 12 luni</p>
                     </div>
                   </div>
@@ -161,7 +161,7 @@ export default function FlotaPage() {
                           target="_blank"
                           rel="noreferrer"
                           onClick={(event) => event.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700"
                         >
                           Hartă <ExternalLink size={12} />
                         </a>
@@ -199,7 +199,8 @@ export default function FlotaPage() {
 
                   <Link
                     href={`/flota/${car.id}`}
-                    className="flex items-center justify-end text-blue-400 text-xs hover:text-blue-300 transition-colors"
+                    prefetch={false}
+                    className="flex items-center justify-end text-xs font-semibold text-blue-600 transition-colors hover:text-blue-700"
                   >
                     Detalii <ChevronRight size={14} />
                   </Link>

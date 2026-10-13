@@ -269,8 +269,8 @@ export default function CheltuieliPage() {
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 categoryFilter === ''
-                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-950/30'
-                  : 'bg-white/[0.07] text-slate-400 hover:bg-white/[0.12] hover:text-white'
+                  ? 'border border-blue-600 bg-blue-600 text-white shadow-sm shadow-blue-950/20'
+                  : 'border border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700'
               }`}
             >
               Toate
@@ -284,8 +284,8 @@ export default function CheltuieliPage() {
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   categoryFilter === cat
-                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-950/30'
-                    : 'bg-white/[0.07] text-slate-400 hover:bg-white/[0.12] hover:text-white'
+                    ? 'border border-blue-600 bg-blue-600 text-white shadow-sm shadow-blue-950/20'
+                    : 'border border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700'
                 }`}
               >
                 {CATEGORY_LABELS[cat]}
@@ -459,7 +459,7 @@ export default function CheltuieliPage() {
                         </td>
                         <td className="px-4 py-3 text-center">
                           {e.verified ? (
-                            <span className="text-green-400 text-xs">✓ Da</span>
+                            <span className="text-xs font-semibold text-emerald-600">✓ Da</span>
                           ) : (
                             <span className="text-gray-600 text-xs">—</span>
                           )}
@@ -495,7 +495,7 @@ export default function CheltuieliPage() {
 
           {/* Pagination */}
           {!isLoading && filtered.length > PAGE_SIZE && (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 border-t border-white/10">
+            <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-xs text-gray-500">
                 {(page - 1) * PAGE_SIZE + 1}–
                 {Math.min(page * PAGE_SIZE, filtered.length)} din {filtered.length}
@@ -504,7 +504,7 @@ export default function CheltuieliPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="p-1.5 rounded-lg text-gray-400 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   <ChevronLeft size={16} />
                 </button>
@@ -527,7 +527,7 @@ export default function CheltuieliPage() {
                         className={`w-8 h-8 rounded-lg text-sm transition-colors ${
                           page === p
                             ? 'bg-blue-600 text-white'
-                            : 'text-gray-400 hover:bg-white/10 hover:text-white'
+                            : 'text-slate-500 hover:bg-blue-50 hover:text-blue-700'
                         }`}
                       >
                         {p}
@@ -537,7 +537,7 @@ export default function CheltuieliPage() {
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="p-1.5 rounded-lg text-gray-400 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   <ChevronRight size={16} />
                 </button>

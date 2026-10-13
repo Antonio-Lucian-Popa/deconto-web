@@ -106,7 +106,12 @@ export interface Expense {
   createdAt: string;
 }
 
-export type ReportType = 'TRIP' | 'MONTHLY' | 'FOAIE_PARCURS' | 'FOAIE_PARCURS_LUNAR';
+export type ReportType =
+  | 'TRIP'
+  | 'MONTHLY'
+  | 'FOAIE_PARCURS'
+  | 'FOAIE_PARCURS_LUNAR'
+  | 'BON_CONSUM_COMBUSTIBIL';
 
 export type FuelKind = 'benzina' | 'motorina' | 'gpl' | 'electric' | 'hybrid';
 
@@ -121,6 +126,13 @@ export interface Report {
   sentTo: string | null;
   sentAt: string | null;
   createdAt: string;
+}
+
+export interface ReportListResponse {
+  items: Report[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export type DocStatus = 'valid' | 'expires_soon' | 'expired';

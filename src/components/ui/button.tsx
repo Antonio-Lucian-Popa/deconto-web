@@ -11,16 +11,16 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: 'bg-blue-600 hover:bg-blue-500 text-white shadow-sm border border-blue-600',
-  secondary: 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm',
-  danger: 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-950/25 border border-red-400/20',
-  ghost: 'hover:bg-slate-100 text-slate-600 hover:text-slate-950',
+  primary: 'border border-blue-600 bg-blue-600 text-white shadow-[0_5px_14px_rgba(37,99,235,0.24)] hover:border-blue-700 hover:bg-blue-700 hover:shadow-[0_7px_18px_rgba(37,99,235,0.3)]',
+  secondary: 'border border-slate-200 bg-white text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950',
+  danger: 'border border-red-600 bg-red-600 text-white shadow-[0_5px_14px_rgba(220,38,38,0.2)] hover:border-red-700 hover:bg-red-700',
+  ghost: 'border border-transparent text-slate-600 hover:bg-blue-50 hover:text-blue-700',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-2.5 text-base',
+  sm: 'min-h-9 px-3 py-1.5 text-sm',
+  md: 'min-h-10 px-4 py-2 text-sm',
+  lg: 'min-h-11 px-6 py-2.5 text-base',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -30,8 +30,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || isLoading}
         className={clsx(
-          'inline-flex items-center gap-2 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 justify-center',
+          'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-2 active:translate-y-px',
           variantClasses[variant],
           sizeClasses[size],
           className
