@@ -71,7 +71,9 @@ export interface Expense {
   createdAt: string;
 }
 
-export type ReportType = 'TRIP' | 'MONTHLY' | 'FOAIE_PARCURS';
+export type ReportType = 'TRIP' | 'MONTHLY' | 'FOAIE_PARCURS' | 'FOAIE_PARCURS_LUNAR';
+
+export type FuelKind = 'benzina' | 'motorina' | 'gpl' | 'electric' | 'hybrid';
 
 export interface Report {
   id: string;
@@ -134,6 +136,10 @@ export interface Car {
   year: number | null;
   mileage: number | null;
   color: string | null;
+  vin: string | null;
+  vehicleCategory: string | null;
+  fuelType: FuelKind;
+  fuelConsumptionPer100km: number | null;
   assignedUserId: string | null;
   createdAt: string;
   reminders?: Reminder[];

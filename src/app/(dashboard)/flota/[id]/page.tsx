@@ -13,9 +13,18 @@ import { toast } from 'sonner';
 import { use, useRef, useState } from 'react';
 import {
   ArrowLeft, Upload, Trash2, RefreshCw, FileText,
-  Image as ImageIcon, DollarSign, Bell, MapPin, ExternalLink,
+  Image as ImageIcon, DollarSign, Bell, MapPin, ExternalLink, Pencil,
 } from 'lucide-react';
 import Link from 'next/link';
+import type { FuelKind } from '@/lib/api-types';
+
+const FUEL_LABELS: Record<FuelKind, string> = {
+  benzina: 'Benzină',
+  motorina: 'Motorină',
+  gpl: 'GPL',
+  electric: 'Electric',
+  hybrid: 'Hibrid',
+};
 
 function formatRON(amount: number, currency = 'RON') {
   if (currency === 'RON')
@@ -71,6 +80,14 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
   const [renewModal, setRenewModal] = useState<Reminder | null>(null);
   const [renewDate, setRenewDate] = useState('');
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [form, setForm] = useState<{
+    vehicleCategory: string;
+    fuelType: FuelKind;
+    fuelConsumptionPer100km: string;
+    mileage: string;
+    color: string;
+  }>({ vehicleCategory: '', fuelType: 'motorina', fuelConsumptionPer100km: '', mileage: '', color: '' });
 
   // Queries
   const { data: car, isLoading: carLoading } = useQuery({
@@ -102,6 +119,43 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
     },
     onError: (err: Error) => toast.error(err.message),
   });
+
+  // Edit vehicle (legal route-sheet header data: category, fuel, consumption norm)
+  const editMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<Car>(`/api/cars/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          vehicleCategory: form.vehicleCategory.trim() || undefined,
+          fuelType: form.fuelType,
+          fuelConsumptionPer100km: form.fuelConsumptionPer100km
+            ? Number(form.fuelConsumptionPer100km)
+            : undefined,
+          mileage: form.mileage ? Number(form.mileage) : undefined,
+          color: form.color.trim() || undefined,
+        }),
+      }),
+    onSuccess: () => {
+      toast.success('Date vehicul actualizate');
+      setEditOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['car', id] });
+      queryClient.invalidateQueries({ queryKey: ['fleet', 'overview'] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  function openEdit() {
+    if (!car) return;
+    setForm({
+      vehicleCategory: car.vehicleCategory ?? '',
+      fuelType: car.fuelType ?? 'motorina',
+      fuelConsumptionPer100km:
+        car.fuelConsumptionPer100km != null ? String(car.fuelConsumptionPer100km) : '',
+      mileage: car.mileage != null ? String(car.mileage) : '',
+      color: car.color ?? '',
+    });
+    setEditOpen(true);
+  }
 
   // Renew reminder
   const renewMutation = useMutation({
@@ -179,12 +233,31 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
         </div>
 
         {/* Info cards */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-950">Date vehicul</h3>
+          <button
+            onClick={openEdit}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            <Pencil size={14} /> Editează vehicul
+          </button>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: 'Marcă / Model', value: `${car.make} ${car.model}` },
             { label: 'An fabricație', value: car.year ?? '—' },
             { label: 'Kilometraj', value: car.mileage ? `${car.mileage.toLocaleString('ro-RO')} km` : '—' },
             { label: 'Culoare', value: car.color ?? '—' },
+            { label: 'Categoria vehiculului', value: car.vehicleCategory ?? '—' },
+            { label: 'Carburant', value: FUEL_LABELS[car.fuelType] ?? car.fuelType },
+            {
+              label: 'Normă consum',
+              value:
+                car.fuelConsumptionPer100km != null
+                  ? `${car.fuelConsumptionPer100km} l/100 km`
+                  : '—',
+            },
+            { label: 'Nr. înmatriculare', value: car.plateNumber },
           ].map((item) => (
             <div key={item.label} className="app-card p-4">
               <p className="text-xs text-gray-400 mb-1">{item.label}</p>
@@ -482,6 +555,84 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
               onClick={() => renewModal && renewMutation.mutate({ reminderId: renewModal.id, expiresAt: renewDate })}
             >
               <RefreshCw size={15} /> Reînnoire
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit vehicle modal */}
+      <Modal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        title="Editează date vehicul"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-400 text-sm">
+            Datele apar pe foaia de parcurs. <span className="font-medium text-slate-950">Norma de consum</span> este
+            folosită pentru calculul consumului normat per deplasare.
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">Categoria vehiculului</label>
+            <input
+              type="text"
+              value={form.vehicleCategory}
+              onChange={(e) => setForm((f) => ({ ...f, vehicleCategory: e.target.value }))}
+              placeholder="ex: Autoturism M1, Autoutilitară N1"
+              className="app-input w-full"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Carburant</label>
+              <select
+                value={form.fuelType}
+                onChange={(e) => setForm((f) => ({ ...f, fuelType: e.target.value as FuelKind }))}
+                className="app-select w-full"
+              >
+                {(Object.keys(FUEL_LABELS) as FuelKind[]).map((k) => (
+                  <option key={k} value={k}>{FUEL_LABELS[k]}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Normă consum (l/100 km)</label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                value={form.fuelConsumptionPer100km}
+                onChange={(e) => setForm((f) => ({ ...f, fuelConsumptionPer100km: e.target.value }))}
+                placeholder="ex: 7.5"
+                className="app-input w-full"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Kilometraj</label>
+              <input
+                type="number"
+                min="0"
+                value={form.mileage}
+                onChange={(e) => setForm((f) => ({ ...f, mileage: e.target.value }))}
+                className="app-input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Culoare</label>
+              <input
+                type="text"
+                value={form.color}
+                onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
+                className="app-input w-full"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="secondary" onClick={() => setEditOpen(false)}>Anulează</Button>
+            <Button isLoading={editMutation.isPending} onClick={() => editMutation.mutate()}>
+              <Pencil size={15} /> Salvează
             </Button>
           </div>
         </div>

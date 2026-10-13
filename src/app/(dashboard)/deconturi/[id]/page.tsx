@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useUsers, userDisplayName } from '@/hooks/use-users';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { ArrowLeft, Check, X, FileText, Download, Send, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Check, X, FileText, Download, Send, Image as ImageIcon, ChevronDown, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 
 function formatRON(amount: number) {
@@ -91,6 +91,9 @@ export default function TripDetailPage({
   const [generatedReport, setGeneratedReport] = useState<Report | null>(null);
   const [generatedFoaieParcurs, setGeneratedFoaieParcurs] = useState<Report | null>(null);
   const [sendingReport, setSendingReport] = useState(false);
+  const [foaieModal, setFoaieModal] = useState(false);
+  const [foaieDriverId, setFoaieDriverId] = useState('');
+  const [foaieVerificatId, setFoaieVerificatId] = useState('');
 
   const { data: trip, isLoading } = useQuery({
     queryKey: ['trip', id],
@@ -136,13 +139,31 @@ export default function TripDetailPage({
   });
 
   const foaieParcursMutation = useMutation({
-    mutationFn: () => apiFetch<Report>(`/api/reports/foaie-parcurs/${id}`, { method: 'POST' }),
+    mutationFn: () =>
+      apiFetch<Report>(`/api/reports/foaie-parcurs/${id}`, {
+        method: 'POST',
+        body: JSON.stringify({
+          ...(foaieDriverId ? { driverUserId: foaieDriverId } : {}),
+          ...(foaieVerificatId ? { verificatUserId: foaieVerificatId } : {}),
+          ...(generatedFoaieParcurs ? { replaceReportId: generatedFoaieParcurs.id } : {}),
+        }),
+      }),
     onSuccess: (report) => {
-      toast.success('Foaie de parcurs generată');
+      toast.success(
+        generatedFoaieParcurs ? 'Foaie de parcurs re-generată' : 'Foaie de parcurs generată'
+      );
       setGeneratedFoaieParcurs(report);
+      setFoaieModal(false);
     },
     onError: (err: Error) => toast.error(err.message),
   });
+
+  function openFoaieModal() {
+    // Default the driver / "Întocmit" to the employee who logged the delegation.
+    setFoaieDriverId(trip?.userId ?? '');
+    setFoaieVerificatId('');
+    setFoaieModal(true);
+  }
 
   async function handleDownloadReport(reportId: string) {
     try {
@@ -446,8 +467,7 @@ export default function TripDetailPage({
             !generatedFoaieParcurs ? (
               <Button
                 variant="secondary"
-                onClick={() => foaieParcursMutation.mutate()}
-                isLoading={foaieParcursMutation.isPending}
+                onClick={openFoaieModal}
               >
                 <FileText size={16} /> Foaie de Parcurs
               </Button>
@@ -458,6 +478,9 @@ export default function TripDetailPage({
                   onClick={() => handleDownloadReport(generatedFoaieParcurs.id)}
                 >
                   <Download size={16} /> Descarcă Foaie Parcurs
+                </Button>
+                <Button variant="secondary" onClick={openFoaieModal}>
+                  <RefreshCw size={16} /> Re-generează
                 </Button>
                 {canSendToAccounting && (
                   <Button
@@ -473,6 +496,83 @@ export default function TripDetailPage({
           )}
         </div>
       </div>
+
+      {/* Foaie de parcurs — choose attributed employees before generating */}
+      <Modal
+        open={foaieModal}
+        onClose={() => setFoaieModal(false)}
+        title={generatedFoaieParcurs ? 'Re-generează foaia de parcurs' : 'Generează foaie de parcurs'}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-400 text-sm">
+            Alege angajatul care apare pe foaie ca{' '}
+            <span className="font-medium text-slate-950">Conducător auto / Întocmit</span>.
+            Implicit este angajatul delegației, dar poți atribui pe altcineva.
+            {generatedFoaieParcurs && ' Foaia existentă va fi înlocuită.'}
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              Conducător auto / Întocmit de
+            </label>
+            <div className="relative">
+              <select
+                value={foaieDriverId}
+                onChange={(e) => setFoaieDriverId(e.target.value)}
+                className="app-select w-full"
+              >
+                {users?.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {userDisplayName(u)}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={14}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              Verificat de (opțional)
+            </label>
+            <div className="relative">
+              <select
+                value={foaieVerificatId}
+                onChange={(e) => setFoaieVerificatId(e.target.value)}
+                className="app-select w-full"
+              >
+                <option value="">Implicit (administrator)</option>
+                {users?.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {userDisplayName(u)}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={14}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="secondary" onClick={() => setFoaieModal(false)}>
+              Anulează
+            </Button>
+            <Button
+              onClick={() => foaieParcursMutation.mutate()}
+              isLoading={foaieParcursMutation.isPending}
+            >
+              {generatedFoaieParcurs ? (
+                <><RefreshCw size={16} /> Re-generează</>
+              ) : (
+                <><FileText size={16} /> Generează</>
+              )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Reject modal */}
       <Modal
