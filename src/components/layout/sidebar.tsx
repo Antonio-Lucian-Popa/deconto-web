@@ -18,6 +18,7 @@ import {
   LogOut,
   ChevronRight,
   CreditCard,
+  Tractor,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -77,6 +78,12 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       href: '/flota',
       icon: <Car size={18} />,
       label: t('flota'),
+      roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'],
+    },
+    {
+      href: '/utilaje',
+      icon: <Tractor size={18} />,
+      label: t('utilaje'),
       roles: ['ADMIN', 'MANAGER', 'ACCOUNTANT'],
     },
     {

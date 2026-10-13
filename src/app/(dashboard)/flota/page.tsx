@@ -1,14 +1,22 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/api-client';
-import type { CarOverview } from '@/lib/api-types';
+import type { Car, CarOverview, FuelKind } from '@/lib/api-types';
 import { Header } from '@/components/layout/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
+import { Select } from '@/components/ui/select';
+import { useAuth } from '@/hooks/use-auth';
+import { useUsers, userDisplayName } from '@/hooks/use-users';
 import Link from 'next/link';
-import { Car, User, ChevronRight, AlertTriangle, CheckCircle2, MapPin, ExternalLink } from 'lucide-react';
+import { Car as CarIcon, User, ChevronRight, AlertTriangle, CheckCircle2, MapPin, ExternalLink, Plus } from 'lucide-react';
+import { FormEvent, useState } from 'react';
+import { toast } from 'sonner';
 
 function formatRON(amount: number) {
   return new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON', maximumFractionDigits: 0 }).format(amount);
@@ -29,11 +37,53 @@ function formatDateTime(dateStr: string) {
 
 export default function FlotaPage() {
   const t = useTranslations('fleet');
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { data: users } = useUsers();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [form, setForm] = useState({
+    make: '', model: '', plateNumber: '', year: '', vin: '', mileage: '', color: '',
+    vehicleCategory: '', fuelType: 'motorina' as FuelKind,
+    fuelConsumptionPer100km: '', assignedUserId: '',
+  });
+  const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER';
 
   const { data: fleet, isLoading } = useQuery({
     queryKey: ['fleet', 'overview'],
     queryFn: () => apiFetch<CarOverview[]>('/api/fleet/overview'),
   });
+
+  const createMutation = useMutation({
+    mutationFn: () => apiFetch<Car>('/api/cars', {
+      method: 'POST',
+      body: JSON.stringify({
+        make: form.make.trim(),
+        model: form.model.trim(),
+        plateNumber: form.plateNumber.trim().toUpperCase(),
+        year: form.year ? Number(form.year) : undefined,
+        vin: form.vin.trim() || undefined,
+        mileage: form.mileage ? Number(form.mileage) : undefined,
+        color: form.color.trim() || undefined,
+        vehicleCategory: form.vehicleCategory.trim() || undefined,
+        fuelType: form.fuelType,
+        fuelConsumptionPer100km: form.fuelConsumptionPer100km ? Number(form.fuelConsumptionPer100km) : undefined,
+        assignedUserId: form.assignedUserId || null,
+      }),
+    }),
+    onSuccess: () => {
+      toast.success('Vehicul adăugat în flotă');
+      setCreateOpen(false);
+      setForm({ make: '', model: '', plateNumber: '', year: '', vin: '', mileage: '', color: '', vehicleCategory: '', fuelType: 'motorina', fuelConsumptionPer100km: '', assignedUserId: '' });
+      queryClient.invalidateQueries({ queryKey: ['fleet'] });
+      queryClient.invalidateQueries({ queryKey: ['cars'] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  function submitCreate(event: FormEvent) {
+    event.preventDefault();
+    createMutation.mutate();
+  }
 
   const expiredCount = fleet?.reduce(
     (n, car) => n + car.documents.filter((d) => d.status === 'expired').length,
@@ -48,11 +98,18 @@ export default function FlotaPage() {
     <div className="flex flex-col h-full overflow-auto">
       <Header title={t('title')} />
       <div className="app-content space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-950">Vehiculele companiei</h2>
+            <p className="mt-1 text-sm text-slate-500">Date tehnice, documente, costuri și poziții GPS.</p>
+          </div>
+          {canManage && <Button onClick={() => setCreateOpen(true)}><Plus size={16} /> Adaugă vehicul</Button>}
+        </div>
         {/* Summary bar */}
         {!isLoading && fleet && fleet.length > 0 && (
           <div className="app-panel-soft flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-6">
-            <span className="text-gray-400 text-sm">
-              <span className="text-white font-semibold">{fleet.length}</span> mașini în flotă
+            <span className="text-slate-600 text-sm">
+              <span className="text-slate-950 font-semibold">{fleet.length}</span> mașini în flotă
             </span>
             {expiredCount > 0 && (
               <span className="flex items-center gap-1.5 text-red-400 text-sm">
@@ -84,8 +141,9 @@ export default function FlotaPage() {
           </div>
         ) : fleet?.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-gray-500 gap-3">
-            <Car size={48} className="opacity-20" />
+            <CarIcon size={48} className="opacity-20" />
             <p>Nu există mașini în flotă</p>
+            {canManage && <Button className="mt-2" onClick={() => setCreateOpen(true)}><Plus size={16} /> Adaugă primul vehicul</Button>}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -96,7 +154,7 @@ export default function FlotaPage() {
                 ? 'border-red-500/40'
                 : hasSoon
                 ? 'border-yellow-500/40'
-                : 'border-white/10';
+                : 'border-slate-200';
 
               return (
                 <div
@@ -106,8 +164,8 @@ export default function FlotaPage() {
                   {/* Header */}
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="text-white font-bold text-lg tracking-wide">{car.plateNumber}</h3>
-                      <p className="text-gray-400 text-sm">
+                      <h3 className="text-slate-950 font-bold text-lg tracking-wide">{car.plateNumber}</h3>
+                      <p className="text-slate-500 text-sm">
                         {car.make} {car.model}{car.year ? ` (${car.year})` : ''}
                       </p>
                     </div>
@@ -121,7 +179,7 @@ export default function FlotaPage() {
                   <div className="flex items-center gap-2 text-sm">
                     <User size={14} className="text-gray-500" />
                     {car.assignedUser ? (
-                      <span className="text-gray-300">
+                      <span className="text-slate-700">
                         {[car.assignedUser.firstName, car.assignedUser.lastName].filter(Boolean).join(' ') || car.assignedUser.email}
                       </span>
                     ) : (
@@ -130,11 +188,11 @@ export default function FlotaPage() {
                   </div>
 
                   {/* GPS */}
-                  <div className="rounded-lg bg-white/[0.055] border border-white/10 p-3 space-y-2">
+                  <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2 min-w-0">
                         <MapPin size={14} className={car.latestLocation ? 'text-green-400' : 'text-gray-600'} />
-                        <span className="text-xs font-medium text-gray-400">GPS</span>
+                        <span className="text-xs font-medium text-slate-500">GPS</span>
                       </div>
                       {car.latestLocation ? (
                         <span className="text-[11px] text-gray-500">
@@ -147,7 +205,7 @@ export default function FlotaPage() {
                     {car.latestLocation && (
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-xs text-gray-300 tabular-nums">
+                          <p className="text-xs text-slate-700 tabular-nums">
                             {car.latestLocation.latitude.toFixed(5)}, {car.latestLocation.longitude.toFixed(5)}
                           </p>
                           {car.latestLocation.accuracy != null && (
@@ -178,7 +236,7 @@ export default function FlotaPage() {
                       <div className="space-y-1">
                         {car.documents.slice(0, 4).map((doc) => (
                           <div key={doc.reminderId} className="flex items-center justify-between">
-                            <span className="text-gray-300 text-xs truncate max-w-36">{doc.title}</span>
+                            <span className="text-slate-700 text-xs truncate max-w-36">{doc.title}</span>
                             <Badge
                               variant={doc.status === 'expired' ? 'danger' : doc.status === 'expires_soon' ? 'warning' : 'success'}
                             >
@@ -210,6 +268,35 @@ export default function FlotaPage() {
           </div>
         )}
       </div>
+
+      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Adaugă vehicul" size="lg">
+        <form onSubmit={submitCreate} className="space-y-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input label="Marcă *" required value={form.make} onChange={(event) => setForm({ ...form, make: event.target.value })} placeholder="Ex. Ford" />
+            <Input label="Model *" required value={form.model} onChange={(event) => setForm({ ...form, model: event.target.value })} placeholder="Ex. Transit" />
+            <Input label="Număr de înmatriculare *" required value={form.plateNumber} onChange={(event) => setForm({ ...form, plateNumber: event.target.value })} placeholder="B 123 ABC" />
+            <Input label="An fabricație" type="number" min="1900" max="2100" value={form.year} onChange={(event) => setForm({ ...form, year: event.target.value })} />
+            <Input label="Serie șasiu (VIN)" value={form.vin} onChange={(event) => setForm({ ...form, vin: event.target.value })} />
+            <Input label="Kilometraj" type="number" min="0" value={form.mileage} onChange={(event) => setForm({ ...form, mileage: event.target.value })} />
+            <Input label="Categorie vehicul" value={form.vehicleCategory} onChange={(event) => setForm({ ...form, vehicleCategory: event.target.value })} placeholder="Ex. Autoutilitară N1" />
+            <Input label="Culoare" value={form.color} onChange={(event) => setForm({ ...form, color: event.target.value })} />
+            <Select label="Carburant" value={form.fuelType} onChange={(event) => setForm({ ...form, fuelType: event.target.value as FuelKind })}>
+              <option value="motorina">Motorină</option><option value="benzina">Benzină</option><option value="gpl">GPL</option><option value="electric">Electric</option><option value="hybrid">Hibrid</option>
+            </Select>
+            <Input label="Consum normat (l/100 km)" type="number" min="0.01" step="0.01" value={form.fuelConsumptionPer100km} onChange={(event) => setForm({ ...form, fuelConsumptionPer100km: event.target.value })} />
+            <div className="sm:col-span-2">
+              <Select label="Șofer responsabil" value={form.assignedUserId} onChange={(event) => setForm({ ...form, assignedUserId: event.target.value })}>
+                <option value="">Neasignat</option>
+                {(users ?? []).filter((item) => item.isActive !== false).map((item) => <option key={item.id} value={item.id}>{userDisplayName(item)}</option>)}
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+            <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>Anulează</Button>
+            <Button type="submit" isLoading={createMutation.isPending}>Adaugă vehiculul</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

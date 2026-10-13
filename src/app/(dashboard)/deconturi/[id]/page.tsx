@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, apiDownload } from '@/lib/api-client';
-import type { TripDetail, Report, UserRole } from '@/lib/api-types';
+import type { Car, TripDetail, Report, UserRole } from '@/lib/api-types';
 import { Header } from '@/components/layout/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useUsers, userDisplayName } from '@/hooks/use-users';
 import { use, useState } from 'react';
 import { toast } from 'sonner';
-import { ArrowLeft, Check, X, FileText, Download, Send, Image as ImageIcon, ChevronDown, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Check, X, FileText, Download, Send, Image as ImageIcon, ChevronDown, RefreshCw, Pencil } from 'lucide-react';
 import Link from 'next/link';
 
 function formatRON(amount: number) {
@@ -94,6 +94,11 @@ export default function TripDetailPage({
   const [foaieModal, setFoaieModal] = useState(false);
   const [foaieDriverId, setFoaieDriverId] = useState('');
   const [foaieVerificatId, setFoaieVerificatId] = useState('');
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    departureLocation: '', destination: '', purpose: '', startDate: '', departureTime: '', endDate: '',
+    arrivalTime: '', budget: '', carId: '', kmStart: '', totalKm: '', kmEnd: '', fuelAtDeparture: '', fuelAtArrival: '',
+  });
 
   const { data: trip, isLoading, isError, refetch } = useQuery({
     queryKey: ['trip', id],
@@ -101,7 +106,61 @@ export default function TripDetailPage({
   });
 
   const { data: users } = useUsers();
+  const { data: cars } = useQuery({
+    queryKey: ['cars'],
+    queryFn: () => apiFetch<Car[]>('/api/cars'),
+  });
   const usersMap = new Map((users ?? []).map((u) => [u.id, u]));
+
+  const editMutation = useMutation({
+    mutationFn: () => apiFetch<TripDetail>(`/api/trips/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        departureLocation: editForm.departureLocation.trim(),
+        destination: editForm.destination.trim(),
+        purpose: editForm.purpose.trim() || undefined,
+        startDate: new Date(`${editForm.startDate}T12:00:00`).toISOString(),
+        departureTime: editForm.departureTime || undefined,
+        endDate: editForm.endDate ? new Date(`${editForm.endDate}T12:00:00`).toISOString() : undefined,
+        arrivalTime: editForm.arrivalTime || undefined,
+        budget: editForm.budget ? Number(editForm.budget) : undefined,
+        carId: editForm.carId || null,
+        kmStart: editForm.kmStart ? Number(editForm.kmStart) : undefined,
+        totalKm: editForm.totalKm ? Number(editForm.totalKm) : undefined,
+        kmEnd: editForm.kmEnd ? Number(editForm.kmEnd) : undefined,
+        fuelAtDeparture: editForm.fuelAtDeparture ? Number(editForm.fuelAtDeparture) : undefined,
+        fuelAtArrival: editForm.fuelAtArrival ? Number(editForm.fuelAtArrival) : undefined,
+      }),
+    }),
+    onSuccess: () => {
+      toast.success('Decont actualizat');
+      setEditOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['trip', id] });
+      queryClient.invalidateQueries({ queryKey: ['trips'] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  function openEdit() {
+    if (!trip) return;
+    setEditForm({
+      departureLocation: trip.departureLocation,
+      destination: trip.destination,
+      purpose: trip.purpose ?? '',
+      startDate: trip.startDate.slice(0, 10),
+      departureTime: trip.departureTime ?? '',
+      endDate: trip.endDate?.slice(0, 10) ?? '',
+      arrivalTime: trip.arrivalTime ?? '',
+      budget: trip.budget != null ? String(trip.budget) : '',
+      carId: trip.carId ?? '',
+      kmStart: trip.kmStart != null ? String(trip.kmStart) : '',
+      totalKm: trip.totalKm != null ? String(trip.totalKm) : '',
+      kmEnd: trip.kmEnd != null ? String(trip.kmEnd) : '',
+      fuelAtDeparture: trip.fuelAtDeparture != null ? String(trip.fuelAtDeparture) : '',
+      fuelAtArrival: trip.fuelAtArrival != null ? String(trip.fuelAtArrival) : '',
+    });
+    setEditOpen(true);
+  }
 
   const approveMutation = useMutation({
     mutationFn: () => apiFetch(`/api/trips/${id}/approve`, { method: 'POST' }),
@@ -244,7 +303,7 @@ export default function TripDetailPage({
       <Header title="Detaliu decont" />
       <div className="app-content space-y-6">
         {/* Breadcrumb + title */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Link href="/deconturi" className="text-slate-500 hover:text-slate-950 transition-colors">
             <ArrowLeft size={18} />
           </Link>
@@ -253,6 +312,9 @@ export default function TripDetailPage({
             {STATUS_LABELS[trip.status] ?? trip.status}
           </Badge>
           {overBudget && <Badge variant="danger">Buget depășit</Badge>}
+          {trip.status !== 'APPROVED' && user?.role !== 'ACCOUNTANT' && (
+            <Button size="sm" variant="secondary" className="sm:ml-auto" onClick={openEdit}><Pencil size={14} /> Editează</Button>
+          )}
         </div>
 
         {trip.rejectionReason && (
@@ -373,7 +435,7 @@ export default function TripDetailPage({
                       key={expense.id}
                       className="transition-colors"
                     >
-                      <td className="px-4 py-3 text-gray-300 text-sm whitespace-nowrap">
+                      <td className="px-4 py-3 text-slate-600 text-sm whitespace-nowrap">
                         {formatDate(expense.date)}
                       </td>
                       <td className="px-4 py-3">
@@ -391,10 +453,10 @@ export default function TripDetailPage({
                           <p className="text-gray-500 text-xs">CIF: {expense.merchantCif}</p>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-gray-300 text-sm max-w-56">
+                      <td className="px-4 py-3 text-slate-600 text-sm max-w-56">
                         <p>{expenseDetails(expense) ?? '—'}</p>
                       </td>
-                      <td className="px-4 py-3 text-gray-400 text-sm max-w-48">
+                      <td className="px-4 py-3 text-slate-500 text-sm max-w-48">
                         <p className="truncate">{expense.notes ?? '—'}</p>
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -518,6 +580,31 @@ export default function TripDetailPage({
           )}
         </div>
       </div>
+
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Editează decontul" size="lg">
+        <form className="space-y-5" onSubmit={(event) => { event.preventDefault(); editMutation.mutate(); }}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div><label className="mb-1.5 block text-sm font-semibold text-slate-700">Plecare din *</label><input required className="app-input w-full" value={editForm.departureLocation} onChange={(e) => setEditForm({ ...editForm, departureLocation: e.target.value })} /></div>
+            <div><label className="mb-1.5 block text-sm font-semibold text-slate-700">Destinație *</label><input required className="app-input w-full" value={editForm.destination} onChange={(e) => setEditForm({ ...editForm, destination: e.target.value })} /></div>
+            <div className="sm:col-span-2"><label className="mb-1.5 block text-sm font-semibold text-slate-700">Scopul deplasării</label><input className="app-input w-full" value={editForm.purpose} onChange={(e) => setEditForm({ ...editForm, purpose: e.target.value })} /></div>
+            <div><label className="mb-1.5 block text-sm font-semibold text-slate-700">Data plecării *</label><input required type="date" className="app-input w-full" value={editForm.startDate} onChange={(e) => setEditForm({ ...editForm, startDate: e.target.value })} /></div>
+            <div><label className="mb-1.5 block text-sm font-semibold text-slate-700">Ora plecării</label><input type="time" className="app-input w-full" value={editForm.departureTime} onChange={(e) => setEditForm({ ...editForm, departureTime: e.target.value })} /></div>
+            <div><label className="mb-1.5 block text-sm font-semibold text-slate-700">Data întoarcerii</label><input type="date" min={editForm.startDate} className="app-input w-full" value={editForm.endDate} onChange={(e) => setEditForm({ ...editForm, endDate: e.target.value })} /></div>
+            <div><label className="mb-1.5 block text-sm font-semibold text-slate-700">Ora sosirii</label><input type="time" className="app-input w-full" value={editForm.arrivalTime} onChange={(e) => setEditForm({ ...editForm, arrivalTime: e.target.value })} /></div>
+            <div><label className="mb-1.5 block text-sm font-semibold text-slate-700">Buget (RON)</label><input type="number" min="0.01" step="0.01" className="app-input w-full" value={editForm.budget} onChange={(e) => setEditForm({ ...editForm, budget: e.target.value })} /></div>
+            <div><label className="mb-1.5 block text-sm font-semibold text-slate-700">Vehicul *</label><select required className="app-select w-full" value={editForm.carId} onChange={(e) => setEditForm({ ...editForm, carId: e.target.value })}><option value="">Selectează vehiculul</option>{(cars ?? []).map((car) => <option key={car.id} value={car.id}>{car.plateNumber} — {car.make} {car.model}</option>)}</select></div>
+            <div><label className="mb-1.5 block text-sm font-semibold text-slate-700">Km plecare</label><input type="number" min="0" className="app-input w-full" value={editForm.kmStart} onChange={(e) => setEditForm({ ...editForm, kmStart: e.target.value })} /></div>
+            <div><label className="mb-1.5 block text-sm font-semibold text-slate-700">Km parcurși</label><input type="number" min="1" className="app-input w-full" value={editForm.totalKm} onChange={(e) => setEditForm({ ...editForm, totalKm: e.target.value })} /></div>
+            <div><label className="mb-1.5 block text-sm font-semibold text-slate-700">Km sosire</label><input type="number" min="0" className="app-input w-full" value={editForm.kmEnd} onChange={(e) => setEditForm({ ...editForm, kmEnd: e.target.value })} /></div>
+            <div><label className="mb-1.5 block text-sm font-semibold text-slate-700">Combustibil plecare (l)</label><input type="number" min="0" step="0.01" className="app-input w-full" value={editForm.fuelAtDeparture} onChange={(e) => setEditForm({ ...editForm, fuelAtDeparture: e.target.value })} /></div>
+            <div><label className="mb-1.5 block text-sm font-semibold text-slate-700">Combustibil sosire (l)</label><input type="number" min="0" step="0.01" className="app-input w-full" value={editForm.fuelAtArrival} onChange={(e) => setEditForm({ ...editForm, fuelAtArrival: e.target.value })} /></div>
+          </div>
+          <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+            <Button type="button" variant="secondary" onClick={() => setEditOpen(false)}>Anulează</Button>
+            <Button type="submit" isLoading={editMutation.isPending}>Salvează modificările</Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Foaie de parcurs — choose attributed employees before generating */}
       <Modal

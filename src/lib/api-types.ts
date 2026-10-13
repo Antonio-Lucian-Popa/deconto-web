@@ -63,6 +63,7 @@ export interface Trip {
   budget: number | null;
   carId: string | null;
   kmStart: number | null;
+  totalKm: number | null;
   kmEnd: number | null;
   kmUrban: number | null;
   kmExtraUrban: number | null;
@@ -114,6 +115,31 @@ export type ReportType =
   | 'BON_CONSUM_COMBUSTIBIL';
 
 export type FuelKind = 'benzina' | 'motorina' | 'gpl' | 'electric' | 'hybrid';
+
+export type UtilajType =
+  | 'EXCAVATOR'
+  | 'DRAGLINA'
+  | 'MOTOFIERASTRAU'
+  | 'GENERATOR'
+  | 'COMPRESOR'
+  | 'BULDOZER'
+  | 'INCARCATOR'
+  | 'ALTELE';
+
+export interface Utilaj {
+  id: string;
+  companyId: string;
+  assignedUserId: string | null;
+  name: string;
+  type: UtilajType;
+  inventoryNumber: string | null;
+  imageUrl: string | null;
+  fuelType: FuelKind;
+  fuelConsumptionPerHour: number | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface Report {
   id: string;

@@ -1,18 +1,23 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/api-client';
-import type { Trip, TripStatus } from '@/lib/api-types';
+import type { Car, Trip, TripStatus } from '@/lib/api-types';
 import { Header } from '@/components/layout/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge, type BadgeVariant } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
+import { Select } from '@/components/ui/select';
 import { useAuth } from '@/hooks/use-auth';
 import { useUsers, userDisplayName } from '@/hooks/use-users';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useMemo, useEffect } from 'react';
-import { ChevronRight, ChevronLeft, Search, Filter } from 'lucide-react';
+import { FormEvent, useState, useMemo, useEffect } from 'react';
+import { ChevronRight, ChevronLeft, Search, Filter, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 
 function formatRON(amount: number) {
   return new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(amount);
@@ -48,6 +53,7 @@ export default function DeconturiPage() {
   const t = useTranslations('trips');
   const { user } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
 
   // Filters
@@ -59,6 +65,11 @@ export default function DeconturiPage() {
   const [toFilter, setToFilter] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [tripForm, setTripForm] = useState({
+    departureLocation: '', destination: '', purpose: '', startDate: new Date().toISOString().slice(0, 10),
+    departureTime: '', endDate: '', budget: '', carId: '', kmStart: '', totalKm: '', fuelAtDeparture: '',
+  });
 
   useEffect(() => {
     const status = searchParams.get('status') as TripStatus | null;
@@ -89,6 +100,43 @@ export default function DeconturiPage() {
     queryKey: ['trips', queryStr],
     queryFn: () => apiFetch<Trip[]>(`/api/trips${queryStr}`),
   });
+
+  const { data: cars } = useQuery({
+    queryKey: ['cars'],
+    queryFn: () => apiFetch<Car[]>('/api/cars'),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: () => apiFetch<Trip>('/api/trips', {
+      method: 'POST',
+      body: JSON.stringify({
+        departureLocation: tripForm.departureLocation.trim(),
+        destination: tripForm.destination.trim(),
+        purpose: tripForm.purpose.trim() || undefined,
+        startDate: new Date(`${tripForm.startDate}T12:00:00`).toISOString(),
+        departureTime: tripForm.departureTime || undefined,
+        endDate: tripForm.endDate ? new Date(`${tripForm.endDate}T12:00:00`).toISOString() : undefined,
+        budget: tripForm.budget ? Number(tripForm.budget) : undefined,
+        carId: tripForm.carId,
+        kmStart: tripForm.kmStart ? Number(tripForm.kmStart) : undefined,
+        totalKm: tripForm.totalKm ? Number(tripForm.totalKm) : undefined,
+        fuelAtDeparture: tripForm.fuelAtDeparture ? Number(tripForm.fuelAtDeparture) : undefined,
+      }),
+    }),
+    onSuccess: (created) => {
+      toast.success('Decont creat');
+      setCreateOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['trips'] });
+      router.push(`/deconturi/${created.id}`);
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  function submitCreate(event: FormEvent) {
+    event.preventDefault();
+    if (!tripForm.carId) return toast.error('Selectează vehiculul');
+    createMutation.mutate();
+  }
 
   const { data: users } = useUsers();
 
@@ -127,6 +175,18 @@ export default function DeconturiPage() {
     <div className="flex flex-col h-full overflow-auto">
       <Header title={t('title')} />
       <div className="app-content space-y-4">
+        {!isAccountant && (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-slate-950">Deconturi de deplasare</h2>
+              <p className="mt-1 text-sm text-slate-500">Creează, completează și urmărește delegațiile companiei.</p>
+            </div>
+            <Button onClick={() => {
+              setTripForm({ departureLocation: '', destination: '', purpose: '', startDate: new Date().toISOString().slice(0, 10), departureTime: '', endDate: '', budget: '', carId: cars?.[0]?.id ?? '', kmStart: '', totalKm: '', fuelAtDeparture: '' });
+              setCreateOpen(true);
+            }}><Plus size={16} /> {t('newTrip')}</Button>
+          </div>
+        )}
         {/* Filters row */}
         <div className="app-filter-bar">
           {/* Search */}
@@ -249,7 +309,7 @@ export default function DeconturiPage() {
                       >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <p className="text-white text-sm font-medium">{trip.destination}</p>
+                            <p className="text-slate-950 text-sm font-medium">{trip.destination}</p>
                             {needsApproval && (
                               <span className="rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
                                 Nou
@@ -265,20 +325,20 @@ export default function DeconturiPage() {
                         {canFilterByUser && (
                           <td className="px-4 py-3">
                             {employee ? (
-                              <p className="text-gray-300 text-sm">{userDisplayName(employee)}</p>
+                              <p className="text-slate-700 text-sm">{userDisplayName(employee)}</p>
                             ) : (
                               <p className="text-gray-500 text-sm">—</p>
                             )}
                           </td>
                         )}
-                        <td className="px-4 py-3 text-gray-300 text-sm whitespace-nowrap">
+                        <td className="px-4 py-3 text-slate-600 text-sm whitespace-nowrap">
                           {formatDate(trip.startDate)}
                           {trip.endDate && ` — ${formatDate(trip.endDate)}`}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <span
                             className={`text-sm font-medium ${
-                              overBudget ? 'text-red-400' : 'text-white'
+                              overBudget ? 'text-red-600' : 'text-slate-950'
                             }`}
                           >
                             {formatRON(trip.totalExpenses ?? 0)}
@@ -289,7 +349,7 @@ export default function DeconturiPage() {
                             </Badge>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right text-gray-300 text-sm">
+                        <td className="px-4 py-3 text-right text-slate-600 text-sm">
                           {trip.budget != null ? formatRON(trip.budget) : '—'}
                         </td>
                         <td className="px-4 py-3 text-center">
@@ -367,6 +427,36 @@ export default function DeconturiPage() {
           )}
         </div>
       </div>
+
+      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Decont nou" size="lg">
+        <form className="space-y-5" onSubmit={submitCreate}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input label="Plecare din *" required value={tripForm.departureLocation} onChange={(event) => setTripForm({ ...tripForm, departureLocation: event.target.value })} placeholder="Ex. București" />
+            <Input label="Destinație *" required value={tripForm.destination} onChange={(event) => setTripForm({ ...tripForm, destination: event.target.value })} placeholder="Ex. Cluj-Napoca" />
+            <div className="sm:col-span-2">
+              <Input label="Scopul deplasării" value={tripForm.purpose} onChange={(event) => setTripForm({ ...tripForm, purpose: event.target.value })} placeholder="Ex. Întâlnire client" />
+            </div>
+            <Input label="Data plecării *" required type="date" value={tripForm.startDate} onChange={(event) => setTripForm({ ...tripForm, startDate: event.target.value })} />
+            <Input label="Ora plecării" type="time" value={tripForm.departureTime} onChange={(event) => setTripForm({ ...tripForm, departureTime: event.target.value })} />
+            <Input label="Data întoarcerii" type="date" min={tripForm.startDate} value={tripForm.endDate} onChange={(event) => setTripForm({ ...tripForm, endDate: event.target.value })} />
+            <Input label="Buget estimat (RON)" type="number" min="0.01" step="0.01" value={tripForm.budget} onChange={(event) => setTripForm({ ...tripForm, budget: event.target.value })} />
+            <div className="sm:col-span-2">
+              <Select label="Vehicul *" required value={tripForm.carId} onChange={(event) => setTripForm({ ...tripForm, carId: event.target.value })}>
+                <option value="">Selectează vehiculul</option>
+                {(cars ?? []).map((car) => <option key={car.id} value={car.id}>{car.plateNumber} — {car.make} {car.model}</option>)}
+              </Select>
+            </div>
+            <Input label="Kilometraj la plecare" type="number" min="0" value={tripForm.kmStart} onChange={(event) => setTripForm({ ...tripForm, kmStart: event.target.value })} />
+            <Input label="Distanță estimată (km)" type="number" min="1" value={tripForm.totalKm} onChange={(event) => setTripForm({ ...tripForm, totalKm: event.target.value })} />
+            <Input label="Combustibil la plecare (litri)" type="number" min="0" step="0.01" value={tripForm.fuelAtDeparture} onChange={(event) => setTripForm({ ...tripForm, fuelAtDeparture: event.target.value })} />
+          </div>
+          {(cars ?? []).length === 0 && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">Adaugă mai întâi un vehicul în secțiunea Flotă.</p>}
+          <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+            <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>Anulează</Button>
+            <Button type="submit" disabled={(cars ?? []).length === 0} isLoading={createMutation.isPending}>Creează decontul</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

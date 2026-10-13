@@ -11,6 +11,8 @@ import { Modal } from '@/components/ui/modal';
 import { Lightbox } from '@/components/ui/lightbox';
 import { toast } from 'sonner';
 import { use, useRef, useState } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { useUsers, userDisplayName } from '@/hooks/use-users';
 import {
   ArrowLeft, Upload, Trash2, RefreshCw, FileText,
   Image as ImageIcon, DollarSign, Bell, MapPin, ExternalLink, Pencil,
@@ -73,6 +75,9 @@ type Tab = 'documents' | 'reminders' | 'costs';
 export default function CarDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { data: users } = useUsers();
+  const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [activeTab, setActiveTab] = useState<Tab>('documents');
@@ -82,12 +87,18 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [form, setForm] = useState<{
+    make: string;
+    model: string;
+    plateNumber: string;
+    year: string;
+    vin: string;
     vehicleCategory: string;
     fuelType: FuelKind;
     fuelConsumptionPer100km: string;
     mileage: string;
     color: string;
-  }>({ vehicleCategory: '', fuelType: 'motorina', fuelConsumptionPer100km: '', mileage: '', color: '' });
+    assignedUserId: string;
+  }>({ make: '', model: '', plateNumber: '', year: '', vin: '', vehicleCategory: '', fuelType: 'motorina', fuelConsumptionPer100km: '', mileage: '', color: '', assignedUserId: '' });
 
   // Queries
   const { data: car, isLoading: carLoading, isError: carError, refetch: refetchCar } = useQuery({
@@ -126,6 +137,11 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
       apiFetch<Car>(`/api/cars/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({
+          make: form.make.trim(),
+          model: form.model.trim(),
+          plateNumber: form.plateNumber.trim().toUpperCase(),
+          year: form.year ? Number(form.year) : undefined,
+          vin: form.vin.trim() || undefined,
           vehicleCategory: form.vehicleCategory.trim() || undefined,
           fuelType: form.fuelType,
           fuelConsumptionPer100km: form.fuelConsumptionPer100km
@@ -133,6 +149,7 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
             : undefined,
           mileage: form.mileage ? Number(form.mileage) : undefined,
           color: form.color.trim() || undefined,
+          assignedUserId: form.assignedUserId || null,
         }),
       }),
     onSuccess: () => {
@@ -147,12 +164,18 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
   function openEdit() {
     if (!car) return;
     setForm({
+      make: car.make,
+      model: car.model,
+      plateNumber: car.plateNumber,
+      year: car.year != null ? String(car.year) : '',
+      vin: car.vin ?? '',
       vehicleCategory: car.vehicleCategory ?? '',
       fuelType: car.fuelType ?? 'motorina',
       fuelConsumptionPer100km:
         car.fuelConsumptionPer100km != null ? String(car.fuelConsumptionPer100km) : '',
       mileage: car.mileage != null ? String(car.mileage) : '',
       color: car.color ?? '',
+      assignedUserId: car.assignedUserId ?? '',
     });
     setEditOpen(true);
   }
@@ -257,12 +280,14 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
         {/* Info cards */}
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-slate-950">Date vehicul</h3>
-          <button
-            onClick={openEdit}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-          >
-            <Pencil size={14} /> Editează vehicul
-          </button>
+          {canManage && (
+            <button
+              onClick={openEdit}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              <Pencil size={14} /> Editează vehicul
+            </button>
+          )}
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
@@ -298,7 +323,7 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
               </div>
               {car.latestLocation ? (
                 <div className="space-y-1">
-                  <p className="text-gray-300 text-sm tabular-nums">
+                  <p className="text-slate-700 text-sm tabular-nums">
                     {car.latestLocation.latitude.toFixed(5)}, {car.latestLocation.longitude.toFixed(5)}
                   </p>
                   <p className="text-gray-500 text-xs">
@@ -526,12 +551,12 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
                     ) : (
                       costs?.map((cost) => (
                         <tr key={cost.id}>
-                          <td className="px-4 py-3 text-gray-300 text-sm whitespace-nowrap">{formatDate(cost.date)}</td>
+                          <td className="px-4 py-3 text-slate-600 text-sm whitespace-nowrap">{formatDate(cost.date)}</td>
                           <td className="px-4 py-3">
                             <Badge variant="gray">{COST_CATEGORY_LABELS[cost.category] ?? cost.category}</Badge>
                           </td>
-                          <td className="px-4 py-3 text-gray-300 text-sm">{cost.vendor ?? '—'}</td>
-                          <td className="px-4 py-3 text-gray-400 text-sm max-w-40">
+                          <td className="px-4 py-3 text-slate-600 text-sm">{cost.vendor ?? '—'}</td>
+                          <td className="px-4 py-3 text-slate-500 text-sm max-w-40">
                             <p className="truncate">{cost.notes ?? '—'}</p>
                           </td>
                           <td className="px-4 py-3 text-right">
@@ -553,12 +578,34 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
         open={renewModal !== null}
         onClose={() => setRenewModal(null)}
         title={`Reînnoire: ${renewModal?.title ?? ''}`}
-        size="sm"
+        size="lg"
       >
         <div className="space-y-4">
           <p className="text-gray-400 text-sm">
             Selectează noua dată de expirare pentru documentul <span className="font-medium text-slate-950">{renewModal?.title}</span>.
           </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Marcă *</label>
+              <input required className="app-input w-full" value={form.make} onChange={(e) => setForm((f) => ({ ...f, make: e.target.value }))} />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Model *</label>
+              <input required className="app-input w-full" value={form.model} onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))} />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Număr de înmatriculare *</label>
+              <input required className="app-input w-full" value={form.plateNumber} onChange={(e) => setForm((f) => ({ ...f, plateNumber: e.target.value }))} />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">An fabricație</label>
+              <input type="number" min="1900" max="2100" className="app-input w-full" value={form.year} onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))} />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Serie șasiu (VIN)</label>
+              <input className="app-input w-full" value={form.vin} onChange={(e) => setForm((f) => ({ ...f, vin: e.target.value }))} />
+            </div>
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1.5">Nouă dată expirare</label>
             <input
@@ -595,7 +642,7 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
             folosită pentru calculul consumului normat per deplasare.
           </p>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">Categoria vehiculului</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Categoria vehiculului</label>
             <input
               type="text"
               value={form.vehicleCategory}
@@ -606,7 +653,7 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Carburant</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Carburant</label>
               <select
                 value={form.fuelType}
                 onChange={(e) => setForm((f) => ({ ...f, fuelType: e.target.value as FuelKind }))}
@@ -618,7 +665,7 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Normă consum (l/100 km)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Normă consum (l/100 km)</label>
               <input
                 type="number"
                 step="0.1"
@@ -632,7 +679,7 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Kilometraj</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Kilometraj</label>
               <input
                 type="number"
                 min="0"
@@ -642,7 +689,7 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">Culoare</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Culoare</label>
               <input
                 type="text"
                 value={form.color}
@@ -650,6 +697,13 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
                 className="app-input w-full"
               />
             </div>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Șofer responsabil</label>
+            <select className="app-select w-full" value={form.assignedUserId} onChange={(e) => setForm((f) => ({ ...f, assignedUserId: e.target.value }))}>
+              <option value="">Neasignat</option>
+              {(users ?? []).filter((item) => item.isActive !== false).map((item) => <option key={item.id} value={item.id}>{userDisplayName(item)}</option>)}
+            </select>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={() => setEditOpen(false)}>Anulează</Button>

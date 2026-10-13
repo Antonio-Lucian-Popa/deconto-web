@@ -1,13 +1,16 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { apiFetch, apiDownload } from '@/lib/api-client';
-import type { Expense, ExpenseCategory } from '@/lib/api-types';
+import type { Expense, ExpenseCategory, Trip } from '@/lib/api-types';
 import { Header } from '@/components/layout/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
+import { Select } from '@/components/ui/select';
 import { useAuth } from '@/hooks/use-auth';
 import { useUsers, userDisplayName } from '@/hooks/use-users';
 import { Lightbox } from '@/components/ui/lightbox';
@@ -19,9 +22,11 @@ import {
   ChevronRight,
   FileSpreadsheet,
   Image as ImageIcon,
+  Pencil,
+  Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState, useMemo } from 'react';
+import { FormEvent, useState, useMemo } from 'react';
 import type { SheetData } from 'write-excel-file/browser';
 
 const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
@@ -72,6 +77,7 @@ export default function CheltuieliPage() {
   const t = useTranslations('expenses');
   const tCommon = useTranslations('common');
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const canFilterByUser = user?.role !== 'EMPLOYEE';
 
   // Filters
@@ -84,6 +90,14 @@ export default function CheltuieliPage() {
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [exportingCsv, setExportingCsv] = useState(false);
   const [exportingExcel, setExportingExcel] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<Expense | null>(null);
+  const [expenseForm, setExpenseForm] = useState({
+    tripId: '', category: 'ALTELE' as ExpenseCategory, amount: '', currency: 'RON',
+    date: new Date().toISOString().slice(0, 10), merchant: '', merchantCif: '', notes: '',
+    fuelLiters: '', fuelPricePerLiter: '', mileage: '', accommodationCheckIn: '',
+    accommodationCheckOut: '', accommodationNights: '', verified: false,
+  });
 
   // Build API query params
   const queryStr = useMemo(() => {
@@ -102,6 +116,10 @@ export default function CheltuieliPage() {
   });
 
   const { data: users } = useUsers();
+  const { data: trips } = useQuery({
+    queryKey: ['trips', 'expense-form'],
+    queryFn: () => apiFetch<Trip[]>('/api/trips'),
+  });
   const usersMap = useMemo(
     () => new Map((users ?? []).map((u) => [u.id, u])),
     [users]
@@ -125,6 +143,68 @@ export default function CheltuieliPage() {
     () => filtered.filter((e) => e.currency === 'RON').reduce((s, e) => s + e.amount, 0),
     [filtered]
   );
+
+  const saveMutation = useMutation({
+    mutationFn: () => {
+      const payload = {
+        tripId: expenseForm.tripId || undefined,
+        category: expenseForm.category,
+        amount: Number(expenseForm.amount),
+        currency: expenseForm.currency.trim().toUpperCase() || 'RON',
+        date: new Date(`${expenseForm.date}T12:00:00`).toISOString(),
+        merchant: expenseForm.merchant.trim(),
+        merchantCif: expenseForm.merchantCif.trim(),
+        notes: expenseForm.notes.trim() || undefined,
+        fuelLiters: expenseForm.category === 'COMBUSTIBIL' && expenseForm.fuelLiters ? Number(expenseForm.fuelLiters) : undefined,
+        fuelPricePerLiter: expenseForm.category === 'COMBUSTIBIL' && expenseForm.fuelPricePerLiter ? Number(expenseForm.fuelPricePerLiter) : undefined,
+        mileage: expenseForm.category === 'COMBUSTIBIL' && expenseForm.mileage ? Number(expenseForm.mileage) : undefined,
+        accommodationCheckIn: expenseForm.category === 'CAZARE' && expenseForm.accommodationCheckIn ? new Date(`${expenseForm.accommodationCheckIn}T12:00:00`).toISOString() : undefined,
+        accommodationCheckOut: expenseForm.category === 'CAZARE' && expenseForm.accommodationCheckOut ? new Date(`${expenseForm.accommodationCheckOut}T12:00:00`).toISOString() : undefined,
+        accommodationNights: expenseForm.category === 'CAZARE' && expenseForm.accommodationNights ? Number(expenseForm.accommodationNights) : undefined,
+        verified: expenseForm.verified,
+      };
+      return apiFetch<Expense>(editing ? `/api/expenses/${editing.id}` : '/api/expenses', {
+        method: editing ? 'PATCH' : 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+    onSuccess: () => {
+      toast.success(editing ? 'Cheltuială actualizată' : 'Cheltuială adăugată');
+      setFormOpen(false);
+      setEditing(null);
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['trips'] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  function openCreate() {
+    setEditing(null);
+    setExpenseForm({ tripId: '', category: 'ALTELE', amount: '', currency: 'RON', date: new Date().toISOString().slice(0, 10), merchant: '', merchantCif: '', notes: '', fuelLiters: '', fuelPricePerLiter: '', mileage: '', accommodationCheckIn: '', accommodationCheckOut: '', accommodationNights: '', verified: false });
+    setFormOpen(true);
+  }
+
+  function openEdit(expense: Expense) {
+    setEditing(expense);
+    setExpenseForm({
+      tripId: expense.tripId ?? '', category: expense.category, amount: String(expense.amount),
+      currency: expense.currency, date: expense.date.slice(0, 10), merchant: expense.merchant ?? '',
+      merchantCif: expense.merchantCif ?? '', notes: expense.notes ?? '',
+      fuelLiters: expense.fuelLiters != null ? String(expense.fuelLiters) : '',
+      fuelPricePerLiter: expense.fuelPricePerLiter != null ? String(expense.fuelPricePerLiter) : '',
+      mileage: expense.mileage != null ? String(expense.mileage) : '',
+      accommodationCheckIn: expense.accommodationCheckIn?.slice(0, 10) ?? '',
+      accommodationCheckOut: expense.accommodationCheckOut?.slice(0, 10) ?? '',
+      accommodationNights: expense.accommodationNights != null ? String(expense.accommodationNights) : '',
+      verified: expense.verified,
+    });
+    setFormOpen(true);
+  }
+
+  function submitExpense(event: FormEvent) {
+    event.preventDefault();
+    saveMutation.mutate();
+  }
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -240,6 +320,13 @@ export default function CheltuieliPage() {
     <div className="flex flex-col h-full overflow-auto">
       <Header title={t('title')} />
       <div className="app-content space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-950">Registrul cheltuielilor</h2>
+            <p className="mt-1 text-sm text-slate-500">Adaugă și corectează bonurile și facturile companiei.</p>
+          </div>
+          {user?.role !== 'ACCOUNTANT' && <Button onClick={openCreate}><Plus size={16} /> Adaugă cheltuială</Button>}
+        </div>
         {/* Filters */}
         <div className="app-filter-bar">
           {/* Search */}
@@ -384,6 +471,7 @@ export default function CheltuieliPage() {
                     'Sumă',
                     'Verificat',
                     'Bon',
+                    user?.role !== 'ACCOUNTANT' ? 'Acțiuni' : null,
                   ]
                     .filter(Boolean)
                     .map((h) => (
@@ -400,7 +488,7 @@ export default function CheltuieliPage() {
                 {isLoading ? (
                   Array.from({ length: 10 }).map((_, i) => (
                     <tr key={i}>
-                      {Array.from({ length: canFilterByUser ? 8 : 7 }).map((_, j) => (
+                      {Array.from({ length: (canFilterByUser ? 8 : 7) + (user?.role !== 'ACCOUNTANT' ? 1 : 0) }).map((_, j) => (
                         <td key={j} className="px-4 py-3">
                           <Skeleton className="h-5 w-full" />
                         </td>
@@ -410,7 +498,7 @@ export default function CheltuieliPage() {
                 ) : paginated.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={canFilterByUser ? 8 : 7}
+                      colSpan={(canFilterByUser ? 8 : 7) + (user?.role !== 'ACCOUNTANT' ? 1 : 0)}
                       className="text-center text-gray-500 py-16 text-sm"
                     >
                       Nu există cheltuieli
@@ -424,11 +512,11 @@ export default function CheltuieliPage() {
                         key={e.id}
                         className="transition-colors"
                       >
-                        <td className="px-4 py-3 text-gray-300 text-sm whitespace-nowrap">
+                        <td className="px-4 py-3 text-slate-600 text-sm whitespace-nowrap">
                           {formatDate(e.date)}
                         </td>
                         {canFilterByUser && (
-                          <td className="px-4 py-3 text-gray-300 text-sm">
+                          <td className="px-4 py-3 text-slate-600 text-sm">
                             {emp ? userDisplayName(emp) : '—'}
                           </td>
                         )}
@@ -444,16 +532,16 @@ export default function CheltuieliPage() {
                           </Badge>
                         </td>
                         <td className="px-4 py-3">
-                          <p className="text-white text-sm">{e.merchant ?? '—'}</p>
+                          <p className="text-slate-950 text-sm">{e.merchant ?? '—'}</p>
                           {e.merchantCif && (
                             <p className="text-gray-500 text-xs">CIF: {e.merchantCif}</p>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-gray-400 text-sm max-w-40">
+                        <td className="px-4 py-3 text-slate-500 text-sm max-w-40">
                           <p className="truncate">{e.notes ?? '—'}</p>
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <span className="text-white text-sm font-medium">
+                          <span className="text-slate-950 text-sm font-medium">
                             {formatRON(e.amount, e.currency)}
                           </span>
                         </td>
@@ -475,7 +563,7 @@ export default function CheltuieliPage() {
                               <img
                                 src={e.imageUrl}
                                 alt="Bon"
-                                className="w-10 h-10 object-cover rounded-lg border border-white/10 group-hover:border-blue-500 transition-colors"
+                                className="w-10 h-10 object-cover rounded-lg border border-slate-200 group-hover:border-blue-500 transition-colors"
                               />
                               <div className="absolute inset-0 rounded-lg bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <ImageIcon size={12} className="text-white" />
@@ -485,6 +573,11 @@ export default function CheltuieliPage() {
                             <span className="text-gray-600 text-xs">—</span>
                           )}
                         </td>
+                        {user?.role !== 'ACCOUNTANT' && (
+                          <td className="px-4 py-3 text-right">
+                            <Button size="sm" variant="ghost" onClick={() => openEdit(e)}><Pencil size={14} /> Editează</Button>
+                          </td>
+                        )}
                       </tr>
                     );
                   })
@@ -548,6 +641,51 @@ export default function CheltuieliPage() {
       </div>
 
       {lightboxSrc && <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+
+      <Modal open={formOpen} onClose={() => setFormOpen(false)} title={editing ? 'Editează cheltuiala' : 'Adaugă cheltuială'} size="lg">
+        <form onSubmit={submitExpense} className="space-y-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select label="Categorie *" required value={expenseForm.category} onChange={(event) => setExpenseForm({ ...expenseForm, category: event.target.value as ExpenseCategory })}>
+              {CATEGORIES.map((category) => <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>)}
+            </Select>
+            <Select label="Decont asociat" value={expenseForm.tripId} onChange={(event) => setExpenseForm({ ...expenseForm, tripId: event.target.value })}>
+              <option value="">Fără decont / decontul activ</option>
+              {(trips ?? []).filter((trip) => trip.status !== 'APPROVED').map((trip) => <option key={trip.id} value={trip.id}>{trip.tripNumber ?? 'Decont'} — {trip.destination}</option>)}
+            </Select>
+            <Input label="Sumă *" required type="number" min="0.01" step="0.01" value={expenseForm.amount} onChange={(event) => setExpenseForm({ ...expenseForm, amount: event.target.value })} />
+            <Input label="Monedă *" required maxLength={3} value={expenseForm.currency} onChange={(event) => setExpenseForm({ ...expenseForm, currency: event.target.value.toUpperCase() })} />
+            <Input label="Data *" required type="date" value={expenseForm.date} onChange={(event) => setExpenseForm({ ...expenseForm, date: event.target.value })} />
+            <Input label="Comerciant *" required value={expenseForm.merchant} onChange={(event) => setExpenseForm({ ...expenseForm, merchant: event.target.value })} />
+            <Input label="CIF comerciant *" required value={expenseForm.merchantCif} onChange={(event) => setExpenseForm({ ...expenseForm, merchantCif: event.target.value })} />
+            <div className="flex items-center gap-3 pt-7">
+              <input id="expense-verified" type="checkbox" checked={expenseForm.verified} onChange={(event) => setExpenseForm({ ...expenseForm, verified: event.target.checked })} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+              <label htmlFor="expense-verified" className="text-sm font-medium text-slate-700">Document verificat</label>
+            </div>
+          </div>
+
+          {expenseForm.category === 'COMBUSTIBIL' && (
+            <div className="grid gap-4 rounded-xl border border-blue-100 bg-blue-50/60 p-4 sm:grid-cols-3">
+              <Input label="Litri" type="number" min="0.01" step="0.01" value={expenseForm.fuelLiters} onChange={(event) => setExpenseForm({ ...expenseForm, fuelLiters: event.target.value })} />
+              <Input label="Preț / litru" type="number" min="0.01" step="0.001" value={expenseForm.fuelPricePerLiter} onChange={(event) => setExpenseForm({ ...expenseForm, fuelPricePerLiter: event.target.value })} />
+              <Input label="Kilometraj" type="number" min="0" value={expenseForm.mileage} onChange={(event) => setExpenseForm({ ...expenseForm, mileage: event.target.value })} />
+            </div>
+          )}
+
+          {expenseForm.category === 'CAZARE' && (
+            <div className="grid gap-4 rounded-xl border border-blue-100 bg-blue-50/60 p-4 sm:grid-cols-3">
+              <Input label="Check-in" type="date" value={expenseForm.accommodationCheckIn} onChange={(event) => setExpenseForm({ ...expenseForm, accommodationCheckIn: event.target.value })} />
+              <Input label="Check-out" type="date" min={expenseForm.accommodationCheckIn} value={expenseForm.accommodationCheckOut} onChange={(event) => setExpenseForm({ ...expenseForm, accommodationCheckOut: event.target.value })} />
+              <Input label="Număr nopți" type="number" min="0" value={expenseForm.accommodationNights} onChange={(event) => setExpenseForm({ ...expenseForm, accommodationNights: event.target.value })} />
+            </div>
+          )}
+
+          <div><label className="mb-1.5 block text-sm font-semibold text-slate-700">Note</label><textarea className="app-input min-h-24 w-full resize-y" value={expenseForm.notes} onChange={(event) => setExpenseForm({ ...expenseForm, notes: event.target.value })} /></div>
+          <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+            <Button type="button" variant="secondary" onClick={() => setFormOpen(false)}>Anulează</Button>
+            <Button type="submit" isLoading={saveMutation.isPending}>{editing ? 'Salvează modificările' : 'Adaugă cheltuiala'}</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
