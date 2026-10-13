@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const publicPaths = ['/login', '/api/auth'];
+const publicPaths = ['/login', '/session/auth'];
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.replace(/\/+$/, '') || '';
 
 function withoutBasePath(pathname: string) {

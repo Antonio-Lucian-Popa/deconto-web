@@ -14,7 +14,7 @@ export function getAccessToken() {
 
 async function refreshAccessToken(): Promise<string | null> {
   try {
-    const res = await fetch(getAppPath('/api/auth/refresh'), { method: 'POST' });
+    const res = await fetch(getAppPath('/session/auth/refresh'), { method: 'POST' });
     if (!res.ok) return null;
     const data = await res.json() as { accessToken: string };
     accessToken = data.accessToken;

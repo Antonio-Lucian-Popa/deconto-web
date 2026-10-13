@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Try to refresh on mount to restore session
-    fetch(getAppPath('/api/auth/refresh'), { method: 'POST' })
+    fetch(getAppPath('/session/auth/refresh'), { method: 'POST' })
       .then((r) => r.ok ? r.json() : null)
       .then(async (data: { accessToken?: string } | null) => {
         if (data?.accessToken) {
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await fetch(getAppPath('/api/auth/logout'), { method: 'POST' });
+    await fetch(getAppPath('/session/auth/logout'), { method: 'POST' });
     setToken(null);
     setAccessToken(null);
     setUser(null);
