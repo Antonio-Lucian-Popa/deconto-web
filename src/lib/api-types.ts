@@ -11,6 +11,41 @@ export interface User {
   createdAt: string;
 }
 
+export type PlanTier = 'TRIAL' | 'START' | 'BUSINESS' | 'SCALE' | 'ENTERPRISE';
+
+export type SubscriptionStatus =
+  | 'trialing'
+  | 'active'
+  | 'past_due'
+  | 'canceled'
+  | 'incomplete'
+  | 'incomplete_expired'
+  | 'unpaid';
+
+export type BillingInterval = 'monthly' | 'annual';
+
+export interface BillingStatus {
+  planTier: PlanTier;
+  subscriptionStatus: SubscriptionStatus;
+  isActive: boolean;
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  usage: {
+    units: number;
+    maxUnits: number | null;
+    users: number;
+    maxUsers: number | null;
+  };
+}
+
+export interface BillingPlan {
+  tier: 'START' | 'BUSINESS' | 'SCALE';
+  limits: { maxUnits: number | null; maxUsers: number | null };
+  price: { monthly: number; annual: number } | undefined;
+  available: boolean;
+}
+
 export type TripStatus = 'ACTIVE' | 'CLOSED' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
 
 export interface Trip {

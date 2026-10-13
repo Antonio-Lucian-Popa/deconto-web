@@ -17,7 +17,7 @@ import {
   Settings,
   LogOut,
   ChevronRight,
-  Gift,
+  CreditCard,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -84,6 +84,12 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       icon: <Users size={18} />,
       label: t('echipa'),
       roles: ['ADMIN', 'MANAGER'],
+    },
+    {
+      href: '/billing',
+      icon: <CreditCard size={18} />,
+      label: t('abonament'),
+      roles: ['ADMIN'],
     },
     {
       href: '/setari',
@@ -155,15 +161,21 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
 
       {/* User + logout */}
       <div className="p-3 space-y-3">
-        <div className="rounded-lg bg-zinc-700/70 p-4 text-center">
-          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-white">
-            <Gift size={18} />
-          </div>
-          <p className="text-sm font-semibold text-white">Plan companie</p>
-          <p className="mt-1 text-[11px] leading-4 text-zinc-400">
-            Rapoarte, flotă și aprobări într-un dashboard.
-          </p>
-        </div>
+        {user?.role === 'ADMIN' && (
+          <Link
+            href="/billing"
+            onClick={onNavigate}
+            className="block rounded-lg bg-zinc-700/70 p-4 text-center hover:bg-zinc-700 transition-colors"
+          >
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-white">
+              <CreditCard size={18} />
+            </div>
+            <p className="text-sm font-semibold text-white">Abonament</p>
+            <p className="mt-1 text-[11px] leading-4 text-zinc-400">
+              Gestionează planul și plata companiei.
+            </p>
+          </Link>
+        )}
         {user && (
           <div className="px-3 py-2 rounded-lg bg-zinc-800">
             <p className="text-xs text-zinc-300 truncate">{user.email}</p>
