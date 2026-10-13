@@ -11,7 +11,7 @@ import { Modal } from '@/components/ui/modal';
 import { Lightbox } from '@/components/ui/lightbox';
 import { useAuth } from '@/hooks/use-auth';
 import { useUsers, userDisplayName } from '@/hooks/use-users';
-import { useState } from 'react';
+import { use, useState } from 'react';
 import { toast } from 'sonner';
 import { ArrowLeft, Check, X, FileText, Download, Send, Image as ImageIcon, ChevronDown, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
@@ -79,9 +79,9 @@ const canApprove: UserRole[] = ['ADMIN', 'MANAGER'];
 export default function TripDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = params;
+  const { id } = use(params);
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -95,7 +95,7 @@ export default function TripDetailPage({
   const [foaieDriverId, setFoaieDriverId] = useState('');
   const [foaieVerificatId, setFoaieVerificatId] = useState('');
 
-  const { data: trip, isLoading } = useQuery({
+  const { data: trip, isLoading, isError, refetch } = useQuery({
     queryKey: ['trip', id],
     queryFn: () => apiFetch<TripDetail>(`/api/trips/${id}`),
   });
@@ -206,7 +206,29 @@ export default function TripDetailPage({
     );
   }
 
-  if (!trip) return null;
+  if (isError || !trip) {
+    return (
+      <div className="flex h-full flex-col overflow-auto">
+        <Header title="Detaliu decont" />
+        <div className="app-content">
+          <div className="app-panel mx-auto max-w-xl p-6 text-center">
+            <h2 className="text-lg font-semibold text-slate-950">Decontul nu a putut fi încărcat</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Verifică dacă decontul mai există și încearcă din nou.
+            </p>
+            <div className="mt-5 flex justify-center gap-3">
+              <Button variant="secondary" onClick={() => void refetch()}>
+                <RefreshCw size={15} /> Reîncearcă
+              </Button>
+              <Link href="/deconturi">
+                <Button>Înapoi la deconturi</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const byCategory: Record<string, number> = {};
   for (const e of trip.expenses) {

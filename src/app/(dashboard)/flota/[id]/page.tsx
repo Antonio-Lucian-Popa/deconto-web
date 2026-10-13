@@ -70,8 +70,8 @@ const COST_CATEGORY_LABELS: Record<string, string> = {
 
 type Tab = 'documents' | 'reminders' | 'costs';
 
-export default function CarDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function CarDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -90,7 +90,7 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
   }>({ vehicleCategory: '', fuelType: 'motorina', fuelConsumptionPer100km: '', mileage: '', color: '' });
 
   // Queries
-  const { data: car, isLoading: carLoading } = useQuery({
+  const { data: car, isLoading: carLoading, isError: carError, refetch: refetchCar } = useQuery({
     queryKey: ['car', id],
     queryFn: () => apiFetch<Car>(`/api/cars/${id}`),
   });
@@ -211,7 +211,29 @@ export default function CarDetailPage({ params }: { params: { id: string } }) {
     );
   }
 
-  if (!car) return null;
+  if (carError || !car) {
+    return (
+      <div className="flex h-full flex-col overflow-auto">
+        <Header title="Detaliu mașină" />
+        <div className="app-content">
+          <div className="app-panel mx-auto max-w-xl p-6 text-center">
+            <h2 className="text-lg font-semibold text-slate-950">Mașina nu a putut fi încărcată</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Verifică dacă mașina mai există și încearcă din nou.
+            </p>
+            <div className="mt-5 flex justify-center gap-3">
+              <Button variant="secondary" onClick={() => void refetchCar()}>
+                <RefreshCw size={15} /> Reîncearcă
+              </Button>
+              <Link href="/flota">
+                <Button>Înapoi la flotă</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'documents', label: 'Documente', icon: <FileText size={15} /> },
