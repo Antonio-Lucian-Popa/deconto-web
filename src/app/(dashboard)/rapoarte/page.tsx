@@ -9,9 +9,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
+import { PdfViewer } from '@/components/ui/pdf-viewer';
 import { useAuth } from '@/hooks/use-auth';
 import { useUsers, userDisplayName } from '@/hooks/use-users';
-import { Download, Send, Plus, FileText, ChevronDown, Trash2, Route, Users, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Download, Send, Plus, FileText, ChevronDown, Trash2, Route, Users, AlertCircle, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useMemo } from 'react';
 
@@ -71,6 +72,7 @@ export default function RapoartePage() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [viewing, setViewing] = useState<Report | null>(null);
 
   const { data: reportPage, isLoading, isError, refetch } = useQuery({
     queryKey: ['reports', page],
@@ -551,7 +553,15 @@ export default function RapoartePage() {
                           {formatDateTime(r.createdAt)}
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setViewing(r)}
+                              className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                              title="Vizualizează documentul"
+                            >
+                              <Eye size={15} />
+                              Vezi
+                            </button>
                             <button
                               onClick={() => handleDownload(r.id)}
                               disabled={downloadingId === r.id}
@@ -616,6 +626,15 @@ export default function RapoartePage() {
           )}
         </div>
       </div>
+
+      {viewing && (
+        <PdfViewer
+          path={`/api/reports/${viewing.id}/view`}
+          title={`${REPORT_TYPE_LABELS[viewing.type] ?? 'Document'}${viewing.month ? ` · ${formatMonth(viewing.month)}` : ''}`}
+          filename={`raport-${REPORT_TYPE_LABELS[viewing.type]?.toLowerCase().replace(/\s+/g, '-') ?? viewing.id}.pdf`}
+          onClose={() => setViewing(null)}
+        />
+      )}
     </div>
   );
 }

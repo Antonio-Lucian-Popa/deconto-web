@@ -13,8 +13,10 @@ import { useAuth } from '@/hooks/use-auth';
 import { useUsers, userDisplayName } from '@/hooks/use-users';
 import { apiFetch } from '@/lib/api-client';
 import type { FuelKind, Utilaj, UtilajType } from '@/lib/api-types';
-import { Pencil, Plus, Search, Trash2, Tractor, UserRound, Wrench } from 'lucide-react';
+import { Pencil, Plus, Search, Trash2, Tractor, UserRound, Wrench, Receipt, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { BonConsumPanel } from '@/components/utilaje/bon-consum-panel';
+import { clsx } from 'clsx';
 
 const TYPE_LABELS: Record<UtilajType, string> = {
   EXCAVATOR: 'Excavator',
@@ -60,6 +62,8 @@ export default function UtilajePage() {
   const queryClient = useQueryClient();
   const { data: users } = useUsers();
   const [search, setSearch] = useState('');
+  const [tab, setTab] = useState<'utilaje' | 'bonuri'>('utilaje');
+  const [bonuriFilter, setBonuriFilter] = useState('');
   const [editing, setEditing] = useState<Utilaj | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Utilaj | null>(null);
@@ -157,16 +161,51 @@ export default function UtilajePage() {
       <div className="app-content space-y-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-slate-950">Registrul utilajelor</h2>
+            <h2 className="text-xl font-bold text-slate-950">
+              {tab === 'utilaje' ? 'Registrul utilajelor' : 'Bonuri de consum combustibil'}
+            </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Gestionează utilajele, normele de consum și persoanele responsabile.
+              {tab === 'utilaje'
+                ? 'Gestionează utilajele, normele de consum și persoanele responsabile.'
+                : 'Înregistrează consumul de combustibil și generează bonuri conforme.'}
             </p>
           </div>
-          {canManage && (
+          {canManage && tab === 'utilaje' && (
             <Button onClick={openCreate}><Plus size={16} /> Adaugă utilaj</Button>
           )}
         </div>
 
+        {/* Tabs */}
+        <div className="inline-flex gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+          {([
+            { id: 'utilaje', label: 'Utilaje', icon: <Settings2 size={15} /> },
+            { id: 'bonuri', label: 'Bonuri de consum', icon: <Receipt size={15} /> },
+          ] as const).map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setTab(item.id)}
+              className={clsx(
+                'inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors',
+                tab === item.id
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
+              )}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'bonuri' ? (
+          <BonConsumPanel
+            key={bonuriFilter}
+            utilaje={utilaje ?? []}
+            canManage={canManage}
+            initialUtilajId={bonuriFilter}
+          />
+        ) : (
+        <>
         <div className="app-filter-bar">
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -241,16 +280,28 @@ export default function UtilajePage() {
                     {item.notes && <p className="flex items-start gap-2"><Wrench size={15} className="mt-0.5 shrink-0 text-slate-400" /><span className="line-clamp-2">{item.notes}</span></p>}
                   </div>
 
-                  {canManage && (
-                    <div className="mt-auto flex justify-end gap-2 border-t border-slate-100 pt-4">
-                      <Button size="sm" variant="secondary" onClick={() => openEdit(item)}><Pencil size={14} /> Editează</Button>
-                      <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setDeleteTarget(item)}><Trash2 size={14} /> Șterge</Button>
-                    </div>
-                  )}
+                  <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-4">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                      onClick={() => { setBonuriFilter(item.id); setTab('bonuri'); }}
+                    >
+                      <Receipt size={14} /> Bonuri consum
+                    </Button>
+                    {canManage && (
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="secondary" onClick={() => openEdit(item)}><Pencil size={14} /> Editează</Button>
+                        <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setDeleteTarget(item)}><Trash2 size={14} /></Button>
+                      </div>
+                    )}
+                  </div>
                 </article>
               );
             })}
           </div>
+        )}
+        </>
         )}
       </div>
 

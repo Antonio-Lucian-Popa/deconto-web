@@ -9,12 +9,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
-  Line,
-  LineChart,
   PieChart,
   Pie,
   Tooltip,
@@ -26,6 +26,10 @@ import {
   CheckCircle2,
   ChevronRight,
   Car,
+  FileText,
+  Wallet,
+  AlertTriangle,
+  Receipt,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -120,6 +124,7 @@ function StatCard({
   delta,
   trend,
   tone = 'blue',
+  icon,
 }: {
   label: string;
   value: React.ReactNode;
@@ -128,6 +133,7 @@ function StatCard({
   delta?: string;
   trend: number[];
   tone?: 'blue' | 'green' | 'red' | 'amber';
+  icon?: React.ReactNode;
 }) {
   const colors = {
     blue: '#2563eb',
@@ -135,12 +141,32 @@ function StatCard({
     red: '#ef4444',
     amber: '#f59e0b',
   };
+  const iconTone = {
+    blue: 'bg-blue-50 text-blue-600',
+    green: 'bg-emerald-50 text-emerald-600',
+    red: 'bg-red-50 text-red-600',
+    amber: 'bg-amber-50 text-amber-600',
+  };
+  const accent = {
+    blue: 'from-blue-500 to-indigo-500',
+    green: 'from-emerald-500 to-teal-500',
+    red: 'from-red-500 to-rose-500',
+    amber: 'from-amber-500 to-orange-500',
+  };
 
   return (
-    <div className="app-card p-4">
+    <div className="app-card relative overflow-hidden p-4">
+      <span className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${accent[tone]}`} />
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <span className="text-xs font-medium text-slate-500">{label}</span>
+          <div className="flex items-center gap-2">
+            {icon && (
+              <span className={`flex h-7 w-7 items-center justify-center rounded-lg ${iconTone[tone]}`}>
+                {icon}
+              </span>
+            )}
+            <span className="text-xs font-medium text-slate-500">{label}</span>
+          </div>
           {isLoading ? (
             <>
               <Skeleton className="mt-2 h-8 w-24" />
@@ -245,6 +271,7 @@ export default function DashboardPage() {
             delta="+1.5%"
             trend={[4, 6, 5, 8, 7, 9, 12]}
             tone="green"
+            icon={<FileText size={15} />}
           />
           <StatCard
             label={t('monthTotal')}
@@ -254,6 +281,7 @@ export default function DashboardPage() {
             delta="+2.8%"
             trend={[8, 9, 7, 10, 12, 11, 14]}
             tone="blue"
+            icon={<Wallet size={15} />}
           />
           <StatCard
             label={t('expiring')}
@@ -263,6 +291,7 @@ export default function DashboardPage() {
             delta="-3.5%"
             trend={[8, 7, 7, 5, 4, 3, 2]}
             tone="red"
+            icon={<AlertTriangle size={15} />}
           />
           <StatCard
             label="Cheltuieli"
@@ -271,7 +300,8 @@ export default function DashboardPage() {
             sub="înregistrări luna curentă"
             delta="+4.2%"
             trend={[3, 5, 6, 5, 8, 9, 11]}
-            tone="green"
+            tone="amber"
+            icon={<Receipt size={15} />}
           />
         </div>
 
@@ -326,8 +356,18 @@ export default function DashboardPage() {
               <Skeleton className="h-[280px] w-full" />
             ) : (
               <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={trendData} margin={{ top: 8, right: 18, left: 0, bottom: 0 }}>
-                  <CartesianGrid stroke="#eef2f7" strokeDasharray="3 3" vertical />
+                <AreaChart data={trendData} margin={{ top: 8, right: 18, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="gradCosts" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#2563eb" stopOpacity={0.28} />
+                      <stop offset="100%" stopColor="#2563eb" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="gradTrips" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#fb923c" stopOpacity={0.24} />
+                      <stop offset="100%" stopColor="#fb923c" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke="#eef2f7" strokeDasharray="3 3" vertical={false} />
                   <XAxis
                     dataKey="label"
                     axisLine={false}
@@ -347,51 +387,76 @@ export default function DashboardPage() {
                       boxShadow: '0 10px 24px rgba(15,23,42,0.08)',
                     }}
                   />
-                  <Line type="monotone" dataKey="costs" stroke="#2563eb" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
-                  <Line type="monotone" dataKey="trips" stroke="#fb923c" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
-                </LineChart>
+                  <Area type="monotone" dataKey="costs" stroke="#2563eb" strokeWidth={2.5} fill="url(#gradCosts)" dot={false} activeDot={{ r: 4 }} />
+                  <Area type="monotone" dataKey="trips" stroke="#fb923c" strokeWidth={2.5} fill="url(#gradTrips)" dot={false} activeDot={{ r: 4 }} />
+                </AreaChart>
               </ResponsiveContainer>
             )}
           </div>
 
           <div className="app-panel p-5">
             <h2 className="font-semibold text-slate-950">Surse costuri</h2>
-            <p className="mt-1 text-xs text-slate-500">{formatRON(monthTotal)} total</p>
+            <p className="mt-1 text-xs text-slate-500">Distribuție pe categorii</p>
             {statsLoading ? (
               <div className="flex h-52 items-center justify-center">
                 <Skeleton className="h-36 w-36 rounded-full" />
               </div>
             ) : categoryData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={240}>
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={65}
-                    outerRadius={95}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={index} fill={entry.color} stroke="transparent" />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number) => [formatRON(value), 'Total']}
-                    contentStyle={{
-                      background: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: 8,
-                      boxShadow: '0 10px 24px rgba(15,23,42,0.08)',
-                    }}
-                    labelStyle={{ color: '#0f172a' }}
-                    itemStyle={{ color: '#475569' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <div className="relative">
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={categoryData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={62}
+                        outerRadius={92}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {categoryData.map((entry, index) => (
+                          <Cell key={index} fill={entry.color} stroke="#fff" strokeWidth={2} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number) => [formatRON(value), 'Total']}
+                        contentStyle={{
+                          background: '#ffffff',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: 8,
+                          boxShadow: '0 10px 24px rgba(15,23,42,0.08)',
+                        }}
+                        labelStyle={{ color: '#0f172a' }}
+                        itemStyle={{ color: '#475569' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  {/* center total */}
+                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-[11px] font-medium text-slate-400">Total lună</span>
+                    <span className="text-lg font-bold tracking-tight text-slate-950">
+                      {formatRON(monthTotal)}
+                    </span>
+                  </div>
+                </div>
+                {/* legend */}
+                <ul className="mt-4 space-y-2">
+                  {categoryData.map((entry) => {
+                    const pct = monthTotal > 0 ? Math.round((entry.value / monthTotal) * 100) : 0;
+                    return (
+                      <li key={entry.name} className="flex items-center gap-2 text-sm">
+                        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: entry.color }} />
+                        <span className="min-w-0 flex-1 truncate text-slate-600">{entry.name}</span>
+                        <span className="text-xs font-medium text-slate-400">{pct}%</span>
+                        <span className="w-20 text-right font-semibold text-slate-800">{formatRON(entry.value)}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
             ) : (
-              <div className="h-52 flex items-center justify-center text-gray-600 text-sm">
+              <div className="h-52 flex items-center justify-center text-slate-500 text-sm">
                 Nu există cheltuieli luna aceasta
               </div>
             )}
