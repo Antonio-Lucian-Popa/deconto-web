@@ -90,11 +90,7 @@ export default function RapoartePage() {
       page: String(page),
       limit: String(REPORTS_PER_PAGE),
     });
-    if (filterMonth) {
-      const [y, m] = filterMonth.split('-').map(Number);
-      params.set('from', new Date(Date.UTC(y, m - 1, 1, 0, 0, 0)).toISOString());
-      params.set('to', new Date(Date.UTC(y, m, 0, 23, 59, 59)).toISOString());
-    }
+    if (filterMonth) params.set('month', filterMonth);
     if (filterType) params.set('type', filterType);
     return params.toString();
   }, [page, filterMonth, filterType]);
@@ -213,11 +209,7 @@ export default function RapoartePage() {
 
   async function handleDownloadZip() {
     const params = new URLSearchParams();
-    if (filterMonth) {
-      const [y, m] = filterMonth.split('-').map(Number);
-      params.set('from', new Date(Date.UTC(y, m - 1, 1, 0, 0, 0)).toISOString());
-      params.set('to', new Date(Date.UTC(y, m, 0, 23, 59, 59)).toISOString());
-    }
+    if (filterMonth) params.set('month', filterMonth);
     if (filterType) params.set('type', filterType);
     setDownloadingZip(true);
     try {
@@ -544,13 +536,13 @@ export default function RapoartePage() {
         >
           <div className="space-y-4">
             <p className="text-sm text-gray-500">
-              Schimbă <span className="font-medium text-slate-950">Conducătorul auto / Întocmit</span> pe
-              toate foile de parcurs (per delegație) <span className="font-medium text-slate-950">generate</span> în
-              luna aleasă. Fiecare foaie este re-generată și înlocuită.
+              Schimbă <span className="font-medium text-slate-950">Conducătorul auto / Întocmit</span> (și opțional
+              Verificat) pe <span className="font-medium text-slate-950">toate foile de parcurs din luna aleasă</span> —
+              atât cele lunare (per mașină), cât și cele per delegație. Fiecare foaie este re-generată și înlocuită.
             </p>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                Luna generării
+                Luna
               </label>
               <input
                 type="month"
