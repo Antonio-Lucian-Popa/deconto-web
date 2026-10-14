@@ -663,19 +663,22 @@ export function BonConsumPanel({ utilaje, canManage, initialUtilajId = '' }: Bon
           </div>
 
           <div>
-            <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Semnături (opțional)</p>
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-400">Semnături (opțional)</p>
+            <p className="mb-3 text-xs text-slate-500">
+              Lasă gol pentru a folosi automat <strong className="font-semibold text-slate-700">administratorul firmei</strong>. Completează doar dacă vrei alt nume.
+            </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <Input
                 label="Întocmit de"
                 value={form.intocmitNume}
                 onChange={(e) => setForm({ ...form, intocmitNume: e.target.value })}
-                placeholder="Nume prenume"
+                placeholder="Implicit: administratorul firmei"
               />
               <Input
                 label="Aprobat de"
                 value={form.aprobatNume}
                 onChange={(e) => setForm({ ...form, aprobatNume: e.target.value })}
-                placeholder="Nume prenume"
+                placeholder="Implicit: administratorul firmei"
               />
             </div>
           </div>

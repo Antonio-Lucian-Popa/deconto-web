@@ -5,3 +5,5 @@ build/
 out/
 coverage/
 *.log
+# TypeScript incremental build cache
+*.tsbuildinfo
