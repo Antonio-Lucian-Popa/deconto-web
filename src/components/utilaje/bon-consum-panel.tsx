@@ -8,11 +8,11 @@ import {
   Trash2,
   FileText,
   Receipt,
-  Fuel,
-  Clock,
   Eye,
   Loader2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-client';
 import type { BonConsum, BonSourceDocType, Report, Utilaj } from '@/lib/api-types';
@@ -20,7 +20,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Modal } from '@/components/ui/modal';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PdfViewer } from '@/components/ui/pdf-viewer';
 
@@ -102,6 +101,8 @@ interface BonConsumPanelProps {
 export function BonConsumPanel({ utilaje, canManage, initialUtilajId = '' }: BonConsumPanelProps) {
   const queryClient = useQueryClient();
   const [filterUtilaj, setFilterUtilaj] = useState(initialUtilajId);
+  const [filterMonth, setFilterMonth] = useState('');
+  const [page, setPage] = useState(1);
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState<BonForm>(emptyForm());
   const [deleteTarget, setDeleteTarget] = useState<BonConsum | null>(null);
@@ -217,10 +218,34 @@ export function BonConsumPanel({ utilaje, canManage, initialUtilajId = '' }: Bon
 
   const noUtilaje = utilaje.length === 0;
 
+  // Month filter is applied client-side on the bon date (utilaj filter is server-side).
+  const filtered = useMemo(() => {
+    const list = bonuri ?? [];
+    if (!filterMonth) return list;
+    return list.filter((b) => (b.date ?? '').slice(0, 7) === filterMonth);
+  }, [bonuri, filterMonth]);
+
+  const PER_PAGE = 15;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const paged = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+
+  // Totals across the whole filtered set (not just the current page) — useful
+  // for the accountant pulling a month.
+  const sumLiters = filtered.reduce(
+    (s, b) => s + b.entries.reduce((es, e) => es + (e.litersAllocated ?? 0), 0),
+    0
+  );
+  const sumTotal = filtered.reduce((s, b) => s + (b.total ?? 0), 0);
+
+  function resetToFirstPage() {
+    setPage(1);
+  }
+
   return (
     <div className="space-y-5">
       <div className="app-filter-bar">
-        <div className="w-full sm:w-72">
+        <div className="w-full sm:w-64">
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
             Filtrează după utilaj
           </label>
@@ -228,7 +253,10 @@ export function BonConsumPanel({ utilaje, canManage, initialUtilajId = '' }: Bon
             <select
               className="app-select w-full"
               value={filterUtilaj}
-              onChange={(e) => setFilterUtilaj(e.target.value)}
+              onChange={(e) => {
+                setFilterUtilaj(e.target.value);
+                resetToFirstPage();
+              }}
             >
               <option value="">Toate utilajele</option>
               {utilaje.map((u) => (
@@ -244,9 +272,42 @@ export function BonConsumPanel({ utilaje, canManage, initialUtilajId = '' }: Bon
             />
           </div>
         </div>
-        <span className="text-sm text-slate-500 sm:ml-auto">
-          <strong className="text-slate-900">{bonuri?.length ?? 0}</strong> bonuri de consum
-        </span>
+        <div className="w-full sm:w-48">
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Luna
+          </label>
+          <input
+            type="month"
+            className="app-input w-full"
+            value={filterMonth}
+            onChange={(e) => {
+              setFilterMonth(e.target.value);
+              resetToFirstPage();
+            }}
+          />
+        </div>
+        {filterMonth && (
+          <button
+            type="button"
+            onClick={() => {
+              setFilterMonth('');
+              resetToFirstPage();
+            }}
+            className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+          >
+            Resetează luna
+          </button>
+        )}
+        <div className="text-sm text-slate-500 sm:ml-auto sm:text-right">
+          <span>
+            <strong className="text-slate-900">{filtered.length}</strong> bonuri
+          </span>
+          {filtered.length > 0 && (
+            <span className="ml-3 hidden text-slate-400 sm:inline">
+              {sumLiters.toFixed(1)} l · {formatMoney(sumTotal)}
+            </span>
+          )}
+        </div>
         {canManage && (
           <Button onClick={openCreate} disabled={noUtilaje}>
             <Plus size={16} /> Adaugă bon
@@ -261,9 +322,9 @@ export function BonConsumPanel({ utilaje, canManage, initialUtilajId = '' }: Bon
       )}
 
       {isLoading ? (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-44" />
+        <div className="app-panel space-y-2 p-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
           ))}
         </div>
       ) : isError ? (
@@ -273,114 +334,144 @@ export function BonConsumPanel({ utilaje, canManage, initialUtilajId = '' }: Bon
             Reîncearcă
           </Button>
         </div>
-      ) : (bonuri?.length ?? 0) === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="app-panel flex flex-col items-center px-6 py-16 text-center">
           <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
             <Receipt size={27} />
           </div>
           <h3 className="font-semibold text-slate-950">Niciun bon de consum</h3>
           <p className="mt-1 max-w-md text-sm text-slate-500">
-            {filterUtilaj
+            {filterMonth
+              ? 'Nu există bonuri în luna selectată.'
+              : filterUtilaj
               ? 'Acest utilaj nu are bonuri de consum înregistrate.'
               : 'Înregistrează consumul de combustibil al utilajelor pentru a genera bonuri conforme.'}
           </p>
-          {canManage && !noUtilaje && (
+          {canManage && !noUtilaje && !filterMonth && (
             <Button className="mt-5" onClick={openCreate}>
               <Plus size={16} /> Adaugă bon
             </Button>
           )}
         </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {bonuri?.map((bon) => {
-            const totalHours = bon.entries.reduce((s, e) => s + (e.hoursWorked ?? 0), 0);
-            const totalLiters = bon.entries.reduce((s, e) => s + (e.litersAllocated ?? 0), 0);
-            return (
-              <article key={bon.id} className="app-card flex flex-col p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                      <Receipt size={21} />
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="truncate font-bold text-slate-950">
-                        Bon {bon.bonNumber ?? '—'}
-                      </h3>
-                      <p className="mt-0.5 text-xs text-slate-500">
-                        {formatDate(bon.date)} · {bon.workSite}
-                      </p>
-                    </div>
-                  </div>
-                  {bon.sourceDocType && (
-                    <Badge variant="info">{SOURCE_DOC_LABELS[bon.sourceDocType]}</Badge>
-                  )}
-                </div>
-
-                <div className="my-4 grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-xl bg-slate-50 p-2.5">
-                    <p className="flex items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                      <Clock size={11} /> Ore
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-slate-800">{totalHours.toFixed(1)}</p>
-                  </div>
-                  <div className="rounded-xl bg-slate-50 p-2.5">
-                    <p className="flex items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                      <Fuel size={11} /> Litri
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-slate-800">{totalLiters.toFixed(1)}</p>
-                  </div>
-                  <div className="rounded-xl bg-slate-50 p-2.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Total</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-800">
-                      {formatMoney(bon.total, bon.currency)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 border-t border-slate-100 pt-3">
-                  {bon.entries.map((entry) => (
-                    <div key={entry.id} className="flex items-center justify-between gap-2 text-sm">
-                      <span className="min-w-0 truncate text-slate-700">
-                        {entry.utilaj?.name ?? utilajById.get(entry.utilajId)?.name ?? 'Utilaj'}
-                        {entry.workDescription ? (
-                          <span className="text-slate-400"> · {entry.workDescription}</span>
-                        ) : null}
-                      </span>
-                      <span className="shrink-0 text-xs font-medium text-slate-500">
-                        {entry.hoursWorked}h · {entry.litersAllocated}l
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-auto flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => generateAndView(bon)}
-                    disabled={generatingId === bon.id}
-                  >
-                    {generatingId === bon.id ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Eye size={14} />
-                    )}
-                    {generatingId === bon.id ? 'Se generează…' : 'Generează & vezi'}
-                  </Button>
-                  {canManage && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                      onClick={() => setDeleteTarget(bon)}
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  )}
-                </div>
-              </article>
-            );
-          })}
+        <div className="app-panel overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="app-table">
+              <thead>
+                <tr>
+                  <th>Bon</th>
+                  <th>Data</th>
+                  <th>Punct de lucru</th>
+                  <th>Utilaje</th>
+                  <th style={{ textAlign: 'right' }}>Ore</th>
+                  <th style={{ textAlign: 'right' }}>Litri</th>
+                  <th style={{ textAlign: 'right' }}>Total</th>
+                  <th style={{ textAlign: 'right' }}>Acțiuni</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paged.map((bon) => {
+                  const totalHours = bon.entries.reduce((s, e) => s + (e.hoursWorked ?? 0), 0);
+                  const totalLiters = bon.entries.reduce((s, e) => s + (e.litersAllocated ?? 0), 0);
+                  const utilajeNames = [
+                    ...new Set(
+                      bon.entries.map(
+                        (e) => e.utilaj?.name ?? utilajById.get(e.utilajId)?.name ?? 'Utilaj'
+                      )
+                    ),
+                  ];
+                  return (
+                    <tr key={bon.id}>
+                      <td className="whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                            <Receipt size={15} />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-slate-900">{bon.bonNumber ?? '—'}</p>
+                            {bon.sourceDocType && (
+                              <p className="text-[11px] text-slate-400">
+                                {SOURCE_DOC_LABELS[bon.sourceDocType]}
+                                {bon.sourceDocNumber ? ` ${bon.sourceDocNumber}` : ''}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap text-sm text-slate-600">{formatDate(bon.date)}</td>
+                      <td className="text-sm text-slate-600">{bon.workSite}</td>
+                      <td className="max-w-[220px] text-sm text-slate-600">
+                        <span className="line-clamp-2">{utilajeNames.join(', ')}</span>
+                        {bon.entries.length > 1 && (
+                          <span className="text-xs text-slate-400"> ({bon.entries.length} linii)</span>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap text-sm font-medium text-slate-700" style={{ textAlign: 'right' }}>
+                        {totalHours.toFixed(1)}
+                      </td>
+                      <td className="whitespace-nowrap text-sm font-medium text-slate-700" style={{ textAlign: 'right' }}>
+                        {totalLiters.toFixed(1)}
+                      </td>
+                      <td className="whitespace-nowrap text-sm font-semibold text-slate-900" style={{ textAlign: 'right' }}>
+                        {formatMoney(bon.total, bon.currency)}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => generateAndView(bon)}
+                            disabled={generatingId === bon.id}
+                            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700 disabled:opacity-40"
+                            title="Generează PDF și vizualizează"
+                          >
+                            {generatingId === bon.id ? (
+                              <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                              <Eye size={14} />
+                            )}
+                            {generatingId === bon.id ? 'Se generează…' : 'PDF'}
+                          </button>
+                          {canManage && (
+                            <button
+                              onClick={() => setDeleteTarget(bon)}
+                              className="inline-flex items-center rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                              title="Șterge bonul"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {totalPages > 1 && (
+            <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-slate-500">
+                {filtered.length} bonuri · pagina {currentPage} din {totalPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft size={15} /> Anterior
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  Următor <ChevronRight size={15} />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
