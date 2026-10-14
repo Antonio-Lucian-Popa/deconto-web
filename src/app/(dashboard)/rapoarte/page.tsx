@@ -12,7 +12,7 @@ import { Modal } from '@/components/ui/modal';
 import { PdfViewer } from '@/components/ui/pdf-viewer';
 import { useAuth } from '@/hooks/use-auth';
 import { useUsers, userDisplayName } from '@/hooks/use-users';
-import { Download, Send, Plus, FileText, ChevronDown, Trash2, Route, Users, AlertCircle, ChevronLeft, ChevronRight, Eye, CalendarRange, Sparkles } from 'lucide-react';
+import { Download, Send, Plus, FileText, ChevronDown, Trash2, Route, Users, AlertCircle, ChevronLeft, ChevronRight, Eye, CalendarRange, Sparkles, Info, FolderArchive } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useMemo } from 'react';
 
@@ -76,6 +76,8 @@ export default function RapoartePage() {
   const [filterType, setFilterType] = useState<'' | ReportType>('');
   const [viewing, setViewing] = useState<Report | null>(null);
   const [showGenMonth, setShowGenMonth] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [downloadingZip, setDownloadingZip] = useState(false);
   const [genMonth, setGenMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [genTypes, setGenTypes] = useState<Record<'MONTHLY' | 'FOAIE_PARCURS_LUNAR' | 'BON_CONSUM_COMBUSTIBIL', boolean>>({
     MONTHLY: true,
@@ -201,11 +203,34 @@ export default function RapoartePage() {
         toast.success(`Generat: ${parts.join(', ')}.`);
       }
       setShowGenMonth(false);
+      // Focus the list on the generated month so the ZIP download is one click away.
+      setFilterMonth(genMonth);
       setPage(1);
       queryClient.invalidateQueries({ queryKey: ['reports'] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
+
+  async function handleDownloadZip() {
+    const params = new URLSearchParams();
+    if (filterMonth) {
+      const [y, m] = filterMonth.split('-').map(Number);
+      params.set('from', new Date(Date.UTC(y, m - 1, 1, 0, 0, 0)).toISOString());
+      params.set('to', new Date(Date.UTC(y, m, 0, 23, 59, 59)).toISOString());
+    }
+    if (filterType) params.set('type', filterType);
+    setDownloadingZip(true);
+    try {
+      await apiDownload(
+        `/api/reports/download-zip?${params.toString()}`,
+        `rapoarte-${filterMonth || 'toate'}.zip`
+      );
+    } catch {
+      toast.error('Descărcarea ZIP a eșuat');
+    } finally {
+      setDownloadingZip(false);
+    }
+  }
 
   async function handleDownload(id: string) {
     setDownloadingId(id);
@@ -253,7 +278,16 @@ export default function RapoartePage() {
       <Header title={t('title')} />
       <div className="app-content space-y-6">
         {/* Action bar */}
-        <div className="flex justify-end gap-3 flex-wrap">
+        <div className="flex items-center justify-end gap-3 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setShowHelp(true)}
+            className="mr-auto inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+            title="Ce face fiecare buton?"
+            aria-label="Ajutor"
+          >
+            <Info size={18} />
+          </button>
           <Button variant="secondary" onClick={() => setShowReassign(true)}>
             <Users size={16} /> Reatribuie foi (lună)
           </Button>
@@ -317,9 +351,25 @@ export default function RapoartePage() {
               Resetează filtrele
             </button>
           )}
-          <span className="text-sm text-slate-500 sm:ml-auto">
-            <strong className="text-slate-900">{reportPage?.total ?? 0}</strong> documente
-          </span>
+          <div className="flex items-center gap-3 sm:ml-auto">
+            <span className="text-sm text-slate-500">
+              <strong className="text-slate-900">{reportPage?.total ?? 0}</strong> documente
+            </span>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleDownloadZip}
+              isLoading={downloadingZip}
+              disabled={(!filterMonth && !filterType) || (reportPage?.total ?? 0) === 0}
+              title={
+                !filterMonth && !filterType
+                  ? 'Alege o lună sau un tip pentru a descărca ZIP'
+                  : 'Descarcă toate documentele din selecție ca ZIP'
+              }
+            >
+              <FolderArchive size={15} /> Descarcă ZIP
+            </Button>
+          </div>
         </div>
 
         {/* New monthly report modal */}
@@ -566,6 +616,46 @@ export default function RapoartePage() {
               >
                 <Users size={16} /> Reatribuie
               </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Help: what each button does */}
+        <Modal open={showHelp} onClose={() => setShowHelp(false)} title="Ghid rapid — Rapoarte" size="lg">
+          <div className="space-y-5 text-sm">
+            <p className="leading-6 text-slate-500">
+              Pe această pagină generezi, vizualizezi și trimiți documentele companiei. Iată ce face fiecare acțiune:
+            </p>
+            <div className="space-y-3">
+              {[
+                { icon: <CalendarRange size={16} />, title: 'Generează luna', body: 'Creează dintr-un singur clic toate documentele unei luni (raport de cheltuieli, foi de parcurs per mașină și bonuri de consum). Sare peste cele deja generate, deci o poți rula din nou fără duplicate.' },
+                { icon: <FolderArchive size={16} />, title: 'Descarcă ZIP', body: 'Descarcă într-o singură arhivă toate documentele din selecția curentă (după lună și/sau tip). Întâi alege luna/tipul din filtre, apoi apasă butonul.' },
+                { icon: <Plus size={16} />, title: 'Raport lunar nou', body: 'Generează un raport de cheltuieli pentru o lună — pentru toți angajații sau doar pentru unul ales.' },
+                { icon: <Route size={16} />, title: 'Foaie de parcurs lunară', body: 'Generează foaia de parcurs legală pentru o mașină, pe luna aleasă, cu kilometraj și consum normat.' },
+                { icon: <Users size={16} />, title: 'Reatribuie foi (lună)', body: 'Schimbă conducătorul auto / „Întocmit" pe toate foile de parcurs generate într-o lună și le regenerează.' },
+              ].map((item) => (
+                <div key={item.title} className="flex gap-3 rounded-xl border border-slate-200 p-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    {item.icon}
+                  </span>
+                  <div>
+                    <p className="font-semibold text-slate-900">{item.title}</p>
+                    <p className="mt-0.5 leading-6 text-slate-500">{item.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+              <p className="font-semibold text-slate-900">Pe fiecare rând din tabel</p>
+              <ul className="mt-2 space-y-1.5 text-slate-600">
+                <li className="flex items-center gap-2"><Eye size={15} className="text-slate-400" /> <strong className="font-semibold text-slate-700">Vezi</strong> — deschide documentul în pagină (fără descărcare).</li>
+                <li className="flex items-center gap-2"><Download size={15} className="text-slate-400" /> <strong className="font-semibold text-slate-700">PDF</strong> — descarcă documentul.</li>
+                <li className="flex items-center gap-2"><Send size={15} className="text-slate-400" /> <strong className="font-semibold text-slate-700">Trimite</strong> — trimite documentul la contabilitate pe email.</li>
+                <li className="flex items-center gap-2"><Trash2 size={15} className="text-slate-400" /> <strong className="font-semibold text-slate-700">Șterge</strong> — elimină documentul.</li>
+              </ul>
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={() => setShowHelp(false)}>Am înțeles</Button>
             </div>
           </div>
         </Modal>
