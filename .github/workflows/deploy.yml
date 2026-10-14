@@ -1,0 +1,67 @@
+name: CI / Deploy (Web)
+
+# Validates every push & PR, and auto-deploys to the server on push to main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-web-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: Typecheck & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Placeholder NEXT_PUBLIC_* values just to validate the production build.
+      # The real values are baked in on the server from its own .env file.
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://example.com/api
+          NEXT_PUBLIC_BASE_PATH: ""
+          NEXTAUTH_SECRET: ci-placeholder-secret-ci-placeholder-secret
+
+  deploy:
+    name: Deploy to server
+    needs: ci
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+            echo "==> Pulling latest main"
+            git fetch --all --prune
+            git checkout main
+            git reset --hard origin/main
+            echo "==> Rebuilding & restarting container (NEXT_PUBLIC_* come from server .env)"
+            docker compose up -d --build --remove-orphans
+            echo "==> Cleaning up old images"
+            docker image prune -f
+            echo "==> Containers:"
+            docker compose ps
