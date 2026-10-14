@@ -76,6 +76,34 @@ export async function apiDownload(path: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+/**
+ * Fetch an authenticated resource (e.g. a PDF) and return a blob object URL
+ * so it can be shown inline in an <iframe> or opened in a new tab without
+ * forcing a download. Caller is responsible for revoking the URL.
+ */
+export async function apiBlobUrl(
+  path: string
+): Promise<{ url: string; blob: Blob; revoke: () => void }> {
+  const headers: Record<string, string> = {};
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+
+  let res = await fetch(`${API_BASE}${path}`, { headers });
+
+  if (res.status === 401) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      headers['Authorization'] = `Bearer ${newToken}`;
+      res = await fetch(`${API_BASE}${path}`, { headers });
+    }
+  }
+
+  if (!res.ok) throw new Error('Documentul nu a putut fi încărcat');
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  return { url, blob, revoke: () => URL.revokeObjectURL(url) };
+}
+
 /** Upload a file (multipart/form-data) to the API. */
 export async function apiUpload<T>(path: string, formData: FormData, retry = true): Promise<T> {
   const headers: Record<string, string> = {};

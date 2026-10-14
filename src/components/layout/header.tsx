@@ -3,7 +3,7 @@
 import { useAuth } from '@/hooks/use-auth';
 import { Badge } from '@/components/ui/badge';
 import type { UserRole } from '@/lib/api-types';
-import { Bell } from 'lucide-react';
+import { Notifications } from '@/components/layout/notifications';
 
 const roleLabels: Record<UserRole, string> = {
   ADMIN: 'Admin',
@@ -29,10 +29,7 @@ export function Header({ title }: { title: string }) {
       </div>
       {user && (
         <div className="hidden sm:flex items-center gap-3 min-w-0">
-          <button className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700" aria-label="Notificări">
-            <Bell size={17} />
-            <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-red-500" />
-          </button>
+          <Notifications />
           <Badge variant={roleVariants[user.role]}>{roleLabels[user.role]}</Badge>
           <div className="flex min-w-0 items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">

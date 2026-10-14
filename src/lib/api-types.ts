@@ -141,11 +141,49 @@ export interface Utilaj {
   updatedAt: string;
 }
 
+export type BonSourceDocType = 'BON_FISCAL' | 'FACTURA' | 'BON_PREDARE';
+
+export interface BonConsumEntry {
+  id: string;
+  bonId: string;
+  utilajId: string;
+  date: string;
+  hoursWorked: number;
+  litersAllocated: number;
+  consumNormatPerHour: number | null;
+  consumJustificat: number | null;
+  workDescription: string | null;
+  createdAt: string;
+  utilaj?: Utilaj;
+}
+
+export interface BonConsum {
+  id: string;
+  companyId: string;
+  createdByUserId: string;
+  bonNumber: string | null;
+  date: string;
+  workSite: string;
+  sourceDocType: BonSourceDocType | null;
+  sourceDocNumber: string | null;
+  sourceDocDate: string | null;
+  liters: number | null;
+  pricePerLiter: number | null;
+  total: number | null;
+  currency: string;
+  receiptImageUrl: string | null;
+  intocmitNume: string | null;
+  aprobatNume: string | null;
+  createdAt: string;
+  entries: BonConsumEntry[];
+}
+
 export interface Report {
   id: string;
   companyId: string;
   type: ReportType;
   tripId: string | null;
+  bonConsumId: string | null;
   month: string | null;
   userId: string;
   pdfPath: string;
