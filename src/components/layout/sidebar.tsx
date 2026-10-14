@@ -102,7 +102,6 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       href: '/setari',
       icon: <Settings size={18} />,
       label: t('setari'),
-      roles: ['ADMIN'],
     },
   ];
 

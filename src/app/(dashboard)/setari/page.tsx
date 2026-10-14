@@ -29,6 +29,7 @@ export default function SetariPage() {
   const { data: company, isLoading } = useQuery({
     queryKey: ['company'],
     queryFn: () => apiFetch<Company>('/api/company'),
+    enabled: user?.role === 'ADMIN',
   });
 
   const { data: aiSettings, isLoading: aiLoading } = useQuery({
@@ -193,7 +194,8 @@ export default function SetariPage() {
             </div>
           </div>
 
-          {/* Company info card */}
+          {/* Company info card — admins only */}
+          {!isReadOnly && (
           <div className="app-panel p-5 sm:p-6 space-y-4">
             <h2 className="text-white font-semibold">Informații companie</h2>
             {isLoading ? (
@@ -227,8 +229,10 @@ export default function SetariPage() {
               </>
             )}
           </div>
+          )}
 
-          {/* Custom categories */}
+          {/* Custom categories — admins only */}
+          {!isReadOnly && (
           <div className="app-panel p-5 sm:p-6 space-y-4">
             <div>
               <h2 className="text-white font-semibold">Categorii personalizate cheltuieli</h2>
@@ -282,6 +286,7 @@ export default function SetariPage() {
               </div>
             )}
           </div>
+          )}
 
           {/* AI / OCR settings */}
           {!isReadOnly && (
@@ -386,8 +391,8 @@ export default function SetariPage() {
           )}
 
           {isReadOnly && (
-            <p className="text-gray-500 text-sm">
-              Doar administratorii pot modifica setările companiei.
+            <p className="text-sm text-slate-500">
+              Setările companiei (date firmă, categorii, OCR) sunt disponibile doar administratorilor.
             </p>
           )}
         </div>
