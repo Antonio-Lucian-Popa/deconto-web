@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/api-client';
-import type { Company } from '@/lib/api-types';
+import type { Company, User } from '@/lib/api-types';
 import { Header } from '@/components/layout/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -12,14 +12,15 @@ import { Select } from '@/components/ui/select';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
-import { KeyRound, Plus, Save, TestTube2, Trash2, X } from 'lucide-react';
+import { KeyRound, Plus, Save, TestTube2, Trash2, X, UserRound } from 'lucide-react';
 import type { CompanyAiSettings } from '@/lib/api-types';
 
 export default function SetariPage() {
   const t = useTranslations('settings');
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const queryClient = useQueryClient();
 
+  const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '' });
   const [form, setForm] = useState({ name: '', cif: '', accountantEmail: '' });
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [newCategory, setNewCategory] = useState('');
@@ -35,6 +36,12 @@ export default function SetariPage() {
     queryFn: () => apiFetch<CompanyAiSettings>('/api/company/ai-settings'),
     enabled: user?.role === 'ADMIN',
   });
+
+  useEffect(() => {
+    if (user) {
+      setProfileForm({ firstName: user.firstName ?? '', lastName: user.lastName ?? '' });
+    }
+  }, [user]);
 
   useEffect(() => {
     if (company) {
@@ -56,6 +63,23 @@ export default function SetariPage() {
       apiKey: prev.apiKey,
     }));
   }, [aiSettings]);
+
+  const profileMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<User>('/api/users/me', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          firstName: profileForm.firstName.trim() || null,
+          lastName: profileForm.lastName.trim() || null,
+        }),
+      }),
+    onSuccess: (updated) => {
+      toast.success('Nume actualizat');
+      updateUser({ firstName: updated.firstName, lastName: updated.lastName });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   const updateMutation = useMutation({
     mutationFn: () =>
@@ -138,6 +162,37 @@ export default function SetariPage() {
       <Header title={t('title')} />
       <div className="app-content">
         <div className="max-w-3xl space-y-6">
+          {/* My profile — available to every user */}
+          <div className="app-panel p-5 sm:p-6 space-y-4">
+            <div className="flex items-center gap-2">
+              <UserRound size={18} className="text-blue-600" />
+              <h2 className="font-semibold text-slate-950">Profilul meu</h2>
+            </div>
+            <p className="-mt-2 text-sm text-slate-500">
+              Schimbă-ți numele afișat în aplicație și folosit pe documente.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input
+                label="Prenume"
+                value={profileForm.firstName}
+                onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
+                placeholder="Prenume"
+              />
+              <Input
+                label="Nume"
+                value={profileForm.lastName}
+                onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
+                placeholder="Nume"
+              />
+            </div>
+            <Input label="Email" value={user?.email ?? ''} disabled />
+            <div className="flex justify-end">
+              <Button onClick={() => profileMutation.mutate()} isLoading={profileMutation.isPending}>
+                <Save size={16} /> Salvează numele
+              </Button>
+            </div>
+          </div>
+
           {/* Company info card */}
           <div className="app-panel p-5 sm:p-6 space-y-4">
             <h2 className="text-white font-semibold">Informații companie</h2>

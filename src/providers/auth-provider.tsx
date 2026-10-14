@@ -9,6 +9,7 @@ interface AuthContextValue {
   user: User | null;
   accessToken: string | null;
   login: (accessToken: string, user: User) => void;
+  updateUser: (patch: Partial<User>) => void;
   logout: () => Promise<void>;
   isLoading: boolean;
 }
@@ -49,6 +50,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(userData);
   }, []);
 
+  const updateUser = useCallback((patch: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...patch } : prev));
+  }, []);
+
   const logout = useCallback(async () => {
     await fetch(getAppPath('/session/auth/logout'), { method: 'POST' });
     setToken(null);
@@ -58,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, accessToken, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, accessToken, login, updateUser, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
