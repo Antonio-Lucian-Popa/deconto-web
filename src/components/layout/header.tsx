@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Badge } from '@/components/ui/badge';
 import type { UserRole } from '@/lib/api-types';
 import { Notifications } from '@/components/layout/notifications';
+import { UserMenu } from '@/components/layout/user-menu';
 
 const roleLabels: Record<UserRole, string> = {
   ADMIN: 'Admin',
@@ -28,15 +29,10 @@ export function Header({ title }: { title: string }) {
         <p className="mt-0.5 hidden text-xs text-slate-500 sm:block">Control, verificare și raportare într-un singur loc</p>
       </div>
       {user && (
-        <div className="hidden sm:flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 sm:gap-3">
           <Notifications />
-          <Badge variant={roleVariants[user.role]}>{roleLabels[user.role]}</Badge>
-          <div className="flex min-w-0 items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">
-              {(user.firstName?.[0] || user.email[0]).toUpperCase()}
-            </div>
-            <span className="max-w-[220px] truncate text-sm font-medium text-slate-700">{user.email}</span>
-          </div>
+          <Badge variant={roleVariants[user.role]} className="hidden sm:inline-flex">{roleLabels[user.role]}</Badge>
+          <UserMenu />
         </div>
       )}
     </header>
