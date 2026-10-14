@@ -72,11 +72,27 @@ export default function RapoartePage() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [filterMonth, setFilterMonth] = useState('');
+  const [filterType, setFilterType] = useState<'' | ReportType>('');
   const [viewing, setViewing] = useState<Report | null>(null);
 
+  const reportsQuery = useMemo(() => {
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(REPORTS_PER_PAGE),
+    });
+    if (filterMonth) {
+      const [y, m] = filterMonth.split('-').map(Number);
+      params.set('from', new Date(Date.UTC(y, m - 1, 1, 0, 0, 0)).toISOString());
+      params.set('to', new Date(Date.UTC(y, m, 0, 23, 59, 59)).toISOString());
+    }
+    if (filterType) params.set('type', filterType);
+    return params.toString();
+  }, [page, filterMonth, filterType]);
+
   const { data: reportPage, isLoading, isError, refetch } = useQuery({
-    queryKey: ['reports', page],
-    queryFn: () => apiFetch<ReportListResponse>(`/api/reports?page=${page}&limit=${REPORTS_PER_PAGE}`),
+    queryKey: ['reports', reportsQuery],
+    queryFn: () => apiFetch<ReportListResponse>(`/api/reports?${reportsQuery}`),
   });
   const reports = reportPage?.items ?? [];
   const totalPages = Math.max(1, Math.ceil((reportPage?.total ?? 0) / REPORTS_PER_PAGE));
@@ -210,6 +226,60 @@ export default function RapoartePage() {
           <Button onClick={() => setShowNew(true)}>
             <Plus size={16} /> {t('newMonthly')}
           </Button>
+        </div>
+
+        {/* Filters — help the accountant pull everything from a given month/type */}
+        <div className="app-filter-bar">
+          <div className="w-full sm:w-48">
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Luna
+            </label>
+            <input
+              type="month"
+              className="app-input w-full"
+              value={filterMonth}
+              onChange={(e) => {
+                setFilterMonth(e.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+          <div className="w-full sm:w-60">
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Tip document
+            </label>
+            <select
+              className="app-select w-full"
+              value={filterType}
+              onChange={(e) => {
+                setFilterType(e.target.value as '' | ReportType);
+                setPage(1);
+              }}
+            >
+              <option value="">Toate tipurile</option>
+              {(Object.keys(REPORT_TYPE_LABELS) as ReportType[]).map((key) => (
+                <option key={key} value={key}>
+                  {REPORT_TYPE_LABELS[key]}
+                </option>
+              ))}
+            </select>
+          </div>
+          {(filterMonth || filterType) && (
+            <button
+              type="button"
+              onClick={() => {
+                setFilterMonth('');
+                setFilterType('');
+                setPage(1);
+              }}
+              className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+            >
+              Resetează filtrele
+            </button>
+          )}
+          <span className="text-sm text-slate-500 sm:ml-auto">
+            <strong className="text-slate-900">{reportPage?.total ?? 0}</strong> documente
+          </span>
         </div>
 
         {/* New monthly report modal */}

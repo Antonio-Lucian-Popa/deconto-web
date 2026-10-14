@@ -240,3 +240,24 @@ main .hover\:bg-white\/\[0\.045\]:hover,
 main .hover\:bg-white\/\[0\.12\]:hover {
   background-color: rgb(248 250 252) !important;
 }
+
+/* Fix: the panel text-color normalizers above force every `.text-white`
+   inside a panel/card/modal to dark slate, which also hit solid-colored
+   buttons and badges — making blue/red controls render with near-black
+   text. Re-assert white on genuinely solid controls (the `~=` token match
+   skips translucent chips like `bg-blue-600/10` that keep dark text). */
+.app-panel [class~="bg-blue-600"],
+.app-panel-soft [class~="bg-blue-600"],
+.app-card [class~="bg-blue-600"],
+.app-panel [class~="bg-blue-700"],
+.app-card [class~="bg-blue-700"],
+.app-panel [class~="bg-indigo-600"],
+.app-panel-soft [class~="bg-indigo-600"],
+.app-card [class~="bg-indigo-600"],
+.app-panel [class~="bg-red-600"],
+.app-panel-soft [class~="bg-red-600"],
+.app-card [class~="bg-red-600"],
+.app-panel [class~="bg-emerald-600"],
+.app-card [class~="bg-emerald-600"] {
+  color: #fff !important;
+}
