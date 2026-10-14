@@ -3,17 +3,19 @@ services:
     build:
       context: .
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-}
-        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+        # Defaults match this deployment (novabytecode.ro/deconto-transport) so a
+        # missing .env can never silently build the app without its basePath.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://novabytecode.ro/deconto-transport/api}
+        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-/deconto-transport}
+        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-}
     container_name: deconto-web
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3000
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-      NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-}
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://novabytecode.ro/deconto-transport/api}
+      NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-/deconto-transport}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-}
     expose:
       - "3000"
     networks:
